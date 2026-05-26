@@ -16,7 +16,7 @@
   {% set thumb = product.thumbnail if product.thumbnail else (ss_list[0] if ss_list else '') %}
   {% if thumb or ss_list %}
   <div class="mb-8 border-y border-slate-200" style="margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); width: 100vw;">
-    <img src="{{ thumb }}" alt="{{ product.title }}" class="w-full h-auto block" id="mainImg">
+    <img src="{{ thumb }}" alt="{{ product.title }}" class="w-full h-auto block mx-auto" style="max-height: 500px; object-fit: contain;" id="mainImg">
     {% if ss_list|length > 1 %}
     <div class="flex gap-2 p-3 overflow-x-auto bg-white">
       {% for ss in ss_list %}

@@ -197,6 +197,39 @@
 {% block scripts %}
 <script>
 const PRODUCT_ID = {{ product.id }};
+
+<!-- Sticky Bottom Bar -->
+<div class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] lg:hidden">
+  <div class="flex items-center gap-2 px-4 py-3">
+    <div class="flex-1 min-w-0">
+      <p class="text-xs font-bold text-slate-800 truncate">{{ product.title }}</p>
+      <div class="flex items-baseline gap-1.5">
+        <span class="text-sm font-black font-mono text-blue-600">{{ fmt_rp(product.price) }}</span>
+        {% if product.original_price and product.original_price > product.price %}
+        <span class="text-[10px] font-mono text-slate-400 line-through">{{ fmt_rp(product.original_price) }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <button onclick="toggleWishlist({{ product.id }}, '{{ product.title|replace("'","") }}', '{{ product.slug }}')"
+      id="stickyWlBtn"
+      class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:border-pink-300 hover:text-pink-400 transition-all">
+      <i class="fa-regular fa-heart" id="stickyWlIcon"></i>
+    </button>
+    <a href="/buy/{{ product.slug }}"
+      class="flex-shrink-0 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-xl transition-all active:scale-95 shadow-md shadow-blue-500/20">
+      <i class="fa-solid fa-bolt mr-1.5"></i>Beli
+    </a>
+  </div>
+</div>
+
+<!-- Spacer biar konten tidak ketutupan sticky bar di mobile -->
+<div class="h-20 lg:hidden"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PRODUCT_ID = {{ product.id }};
 let selectedRating = 5;
 
 // ── WISHLIST ───────────────────────────────────────────────
@@ -223,14 +256,20 @@ function toggleWishlist(id, title, slug) {
 function updateWishlistBtn(active) {
   const icon = document.getElementById('wishlistIcon');
   const txt  = document.getElementById('wishlistTxt');
+  const stickyIcon = document.getElementById('stickyWlIcon');
+  const stickyBtn  = document.getElementById('stickyWlBtn');
   if (active) {
     icon.className = 'fa-solid fa-heart mr-2 text-pink-500';
     txt.textContent = 'Tersimpan di Wishlist';
     document.getElementById('wishlistBtn').className = 'block w-full py-3 border border-pink-300 bg-pink-50 text-pink-600 font-bold text-center rounded-xl transition-all text-sm';
+    if (stickyIcon) stickyIcon.className = 'fa-solid fa-heart text-pink-500';
+    if (stickyBtn)  stickyBtn.classList.add('border-pink-300', 'text-pink-500', 'bg-pink-50');
   } else {
     icon.className = 'fa-regular fa-heart mr-2';
     txt.textContent = 'Simpan ke Wishlist';
     document.getElementById('wishlistBtn').className = 'block w-full py-3 border border-slate-200 text-slate-500 hover:border-pink-400 hover:text-pink-500 font-bold text-center rounded-xl transition-all text-sm';
+    if (stickyIcon) stickyIcon.className = 'fa-regular fa-heart';
+    if (stickyBtn)  stickyBtn.classList.remove('border-pink-300', 'text-pink-500', 'bg-pink-50');
   }
 }
 

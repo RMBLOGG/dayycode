@@ -623,7 +623,7 @@ def api_upload_screenshot(pid):
             file,
             folder='srcmarket/screenshots',
             public_id=f'ss_{pid}_{int(time.time())}',
-            transformation=[{'width': 1280, 'quality': 'auto'}]
+            transformation=[{'width': 1280, 'height': 720, 'crop': 'fill', 'gravity': 'auto', 'quality': 'auto'}]
         )
         url = result['secure_url']
     except Exception as e:

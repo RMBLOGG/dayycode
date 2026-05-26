@@ -38,6 +38,15 @@
       {% endfor %}
     </div>
     {% endif %}
+
+    <!-- Rating display -->
+    <div class="flex items-center gap-1 mb-2" id="card-rating-{{ p.id }}">
+      <div class="flex gap-0.5 card-stars" data-pid="{{ p.id }}">
+        {% for i in range(5) %}<i class="fa-regular fa-star text-slate-200 text-xs"></i>{% endfor %}
+      </div>
+      <span class="text-[10px] text-slate-400 card-avg" data-pid="{{ p.id }}"></span>
+    </div>
+
     <div class="flex items-center justify-between mt-2">
       <div>
         <span class="font-extrabold font-mono text-blue-600 text-sm">{{ fmt_rp(p.price) }}</span>
@@ -45,9 +54,19 @@
         <span class="font-mono text-xs text-slate-400 line-through ml-1">{{ fmt_rp(p.original_price) }}</span>
         {% endif %}
       </div>
-      <a href="/buy/{{ p.slug }}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all active:scale-95 shadow-sm">
-        Beli
-      </a>
+      <div class="flex items-center gap-1.5">
+        <!-- Wishlist button -->
+        <button
+          onclick="event.preventDefault(); cardToggleWishlist({{ p.id }}, '{{ p.title|replace("'","") }}', '{{ p.slug }}')"
+          id="wl-{{ p.id }}"
+          class="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 text-slate-300 hover:border-pink-300 hover:text-pink-400 transition-all"
+          title="Simpan ke Wishlist">
+          <i class="fa-regular fa-heart text-xs"></i>
+        </button>
+        <a href="/buy/{{ p.slug }}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all active:scale-95 shadow-sm">
+          Beli
+        </a>
+      </div>
     </div>
     <p class="text-[10px] text-slate-400 mt-1.5"><i class="fa-solid fa-download mr-1"></i>{{ p.sales or 0 }} terjual</p>
   </div>

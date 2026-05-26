@@ -15,10 +15,12 @@
   {% set ss_list = product.screenshots_list if product.screenshots_list else [] %}
   {% set thumb = product.thumbnail if product.thumbnail else (ss_list[0] if ss_list else '') %}
   {% if thumb or ss_list %}
-  <div class="-mx-4 mb-8 shadow-sm border-y border-slate-200 bg-white overflow-hidden">
-    <img src="{{ thumb }}" alt="{{ product.title }}" class="w-full h-auto block" id="mainImg">
+  <div class="-mx-4 mb-8 shadow-sm border-y border-slate-200 bg-slate-900 overflow-hidden">
+    <div class="aspect-video">
+      <img src="{{ thumb }}" alt="{{ product.title }}" class="w-full h-full object-contain" id="mainImg">
+    </div>
     {% if ss_list|length > 1 %}
-    <div class="flex gap-2 p-3 overflow-x-auto">
+    <div class="flex gap-2 p-3 overflow-x-auto bg-white">
       {% for ss in ss_list %}
       <img src="{{ ss }}" onclick="document.getElementById('mainImg').src='{{ ss }}'"
         class="w-20 h-14 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all flex-shrink-0">

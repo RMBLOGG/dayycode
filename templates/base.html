@@ -198,39 +198,31 @@
     <!-- Bottom: Pembayaran full width -->
     <div class="border-t border-slate-700 pt-8">
       <h3 class="font-bold text-white mb-4 text-sm">Pembayaran</h3>
-      <div class="flex flex-wrap gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <!-- DANA -->
-        <div class="bg-slate-700 rounded-xl px-4 py-3 flex items-center gap-3 min-w-[160px]">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg" alt="DANA" class="h-5 object-contain">
-          <div>
-            <p class="font-mono font-bold text-white text-xs">082320781747</p>
-            <p class="text-slate-400 text-xs">a.n. Ramdan Hidayah</p>
-          </div>
+        <div class="border border-slate-600 rounded-xl px-4 py-4 flex flex-col items-center gap-2 text-center">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg" alt="DANA" class="h-6 object-contain">
+          <p class="font-mono font-bold text-white text-xs">082320781747</p>
+          <p class="text-slate-400 text-xs">a.n. Ramdan Hidayah</p>
         </div>
         <!-- OVO -->
-        <div class="bg-slate-700 rounded-xl px-4 py-3 flex items-center gap-3 min-w-[160px]">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg" alt="OVO" class="h-5 object-contain">
-          <div>
-            <p class="font-mono font-bold text-white text-xs">082320781747</p>
-            <p class="text-slate-400 text-xs">a.n. Ramdan Hidayah</p>
-          </div>
+        <div class="border border-slate-600 rounded-xl px-4 py-4 flex flex-col items-center gap-2 text-center">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg" alt="OVO" class="h-6 object-contain">
+          <p class="font-mono font-bold text-white text-xs">082320781747</p>
+          <p class="text-slate-400 text-xs">a.n. Ramdan Hidayah</p>
         </div>
         <!-- GoPay -->
-        <div class="bg-slate-700 rounded-xl px-4 py-3 flex items-center gap-3 min-w-[160px]">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Gopay_logo.svg" alt="GoPay" class="h-5 object-contain">
-          <div>
-            <p class="font-mono font-bold text-white text-xs">082320781747</p>
-            <p class="text-slate-400 text-xs">a.n. Ramdan Hidayah</p>
-          </div>
+        <div class="border border-slate-600 rounded-xl px-4 py-4 flex flex-col items-center gap-2 text-center">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Gopay_logo.svg" alt="GoPay" class="h-6 object-contain">
+          <p class="font-mono font-bold text-white text-xs">082320781747</p>
+          <p class="text-slate-400 text-xs">a.n. Ramdan Hidayah</p>
         </div>
         <!-- WhatsApp -->
         <a href="https://wa.me/{{ cfg.contact_wa }}" target="_blank"
-           class="bg-slate-700 hover:bg-green-700 rounded-xl px-4 py-3 flex items-center gap-3 transition-colors">
-          <i class="fa-brands fa-whatsapp text-green-400 text-xl"></i>
-          <div>
-            <p class="font-mono font-bold text-white text-xs">082320781747</p>
-            <p class="text-slate-400 text-xs">WhatsApp</p>
-          </div>
+           class="border border-slate-600 hover:border-green-500 rounded-xl px-4 py-4 flex flex-col items-center gap-2 text-center transition-colors">
+          <i class="fa-brands fa-whatsapp text-green-400 text-2xl"></i>
+          <p class="font-mono font-bold text-white text-xs">082320781747</p>
+          <p class="text-slate-400 text-xs">WhatsApp</p>
         </a>
       </div>
     </div>

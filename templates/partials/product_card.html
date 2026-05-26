@@ -2,8 +2,9 @@
   <a href="/product/{{ p.slug }}" class="block relative">
     <div class="aspect-video bg-slate-100 flex items-center justify-center overflow-hidden">
       {% set screenshots = parse_json(p.screenshots) if p.screenshots else [] %}
-      {% if screenshots %}
-        <img src="{{ screenshots[0] }}" alt="{{ p.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+      {% set thumb = p.thumbnail if p.thumbnail else (screenshots[0] if screenshots else '') %}
+      {% if thumb %}
+        <img src="{{ thumb }}" alt="{{ p.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
       {% else %}
         <div class="text-center p-4">
           <i class="fa-solid fa-code text-4xl text-blue-200 mb-2 block"></i>

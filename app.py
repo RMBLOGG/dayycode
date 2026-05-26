@@ -598,7 +598,7 @@ def api_upload_thumbnail(pid):
             folder='srcmarket/thumbnails',
             public_id=f'thumbnail_{pid}',
             overwrite=True,
-            transformation=[{'width': 800, 'height': 600, 'crop': 'fill', 'quality': 'auto'}]
+            transformation=[{'width': 1280, 'height': 720, 'crop': 'fill', 'gravity': 'auto', 'quality': 'auto'}]
         )
         url = result['secure_url']
     except Exception as e:

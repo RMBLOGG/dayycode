@@ -675,6 +675,19 @@ def api_save_settings():
     return jsonify({'ok': True})
 
 
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
+
+@app.route('/kebijakan-privasi')
+def kebijakan_privasi():
+    return render_template('kebijakan_privasi.html')
+
+@app.route('/syarat-ketentuan')
+def syarat_ketentuan():
+    return render_template('syarat_ketentuan.html')
+
+
 @app.errorhandler(404)
 def not_found(e):
     return render_template('404.html'), 404

@@ -82,13 +82,13 @@
 {% block scripts %}
 <script>
 async function approveReview(id) {
-  const res = await apiFetch(`/api/admin/reviews/${id}/approve`, { method: 'POST' });
+  const res = await api(`/api/admin/reviews/${id}/approve`, { method: 'POST' });
   if (res.ok) { showToast('Ulasan disetujui!'); document.getElementById(`rev-${id}`)?.remove(); }
   else showToast('Gagal', 'error');
 }
 async function deleteReview(id) {
   if (!confirm('Hapus ulasan ini?')) return;
-  const res = await apiFetch(`/api/admin/reviews/${id}`, { method: 'DELETE' });
+  const res = await api(`/api/admin/reviews/${id}`, { method: 'DELETE' });
   if (res.ok) { showToast('Dihapus'); document.getElementById(`rev-${id}`)?.remove(); }
   else showToast('Gagal', 'error');
 }

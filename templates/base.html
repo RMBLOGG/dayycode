@@ -164,57 +164,78 @@
 
 <!-- Footer -->
 <footer class="bg-slate-800 text-slate-300 mt-16">
-  <div class="max-w-6xl mx-auto px-4 py-10 grid grid-cols-2 lg:grid-cols-4 gap-8">
-    <div>
-      <div class="flex items-center gap-2 mb-3">
-        <div class="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center"><img src="/static/icon.png" class="w-full h-full object-contain"></div>
-        <span class="font-extrabold text-white">Dayy Code</span>
+  <div class="max-w-6xl mx-auto px-4 py-10">
+    <!-- Top: Brand + Nav + Info -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+      <!-- Brand -->
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center"><img src="/static/icon.png" class="w-full h-full object-contain"></div>
+          <span class="font-extrabold text-white">Dayy Code</span>
+        </div>
+        <p class="text-sm text-slate-400 leading-relaxed">{{ cfg.site_description }}</p>
       </div>
-      <p class="text-sm text-slate-400 leading-relaxed">{{ cfg.site_description }}</p>
+      <!-- Navigasi -->
+      <div>
+        <h3 class="font-bold text-white mb-3 text-sm">Navigasi</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="/" class="hover:text-white transition-colors">Beranda</a></li>
+          <li><a href="/products" class="hover:text-white transition-colors">Semua Produk</a></li>
+          <li><a href="/track" class="hover:text-white transition-colors">Cek Pesanan</a></li>
+        </ul>
+      </div>
+      <!-- Informasi -->
+      <div>
+        <h3 class="font-bold text-white mb-3 text-sm">Informasi</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="/faq" class="hover:text-white transition-colors">FAQ</a></li>
+          <li><a href="/kebijakan-privasi" class="hover:text-white transition-colors">Kebijakan Privasi</a></li>
+          <li><a href="/syarat-ketentuan" class="hover:text-white transition-colors">Syarat &amp; Ketentuan</a></li>
+        </ul>
+      </div>
     </div>
-    <div>
-      <h3 class="font-bold text-white mb-3 text-sm">Navigasi</h3>
-      <ul class="space-y-2 text-sm">
-        <li><a href="/" class="hover:text-white transition-colors">Beranda</a></li>
-        <li><a href="/products" class="hover:text-white transition-colors">Semua Produk</a></li>
-        <li><a href="/track" class="hover:text-white transition-colors">Cek Pesanan</a></li>
-      </ul>
-    </div>
-    <div>
-      <h3 class="font-bold text-white mb-3 text-sm">Informasi</h3>
-      <ul class="space-y-2 text-sm">
-        <li><a href="/faq" class="hover:text-white transition-colors">FAQ</a></li>
-        <li><a href="/kebijakan-privasi" class="hover:text-white transition-colors">Kebijakan Privasi</a></li>
-        <li><a href="/syarat-ketentuan" class="hover:text-white transition-colors">Syarat &amp; Ketentuan</a></li>
-      </ul>
-    </div>
-    <div>
-      <h3 class="font-bold text-white mb-3 text-sm">Pembayaran</h3>
-      <div class="grid grid-cols-2 gap-2">
-        <!-- Dana -->
-        <div class="bg-slate-700 rounded-xl p-3 flex flex-col items-center gap-2 text-center">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg" alt="DANA" class="h-6 object-contain">
-          <p class="font-mono font-bold text-white text-xs leading-tight">082320781747</p>
-          <p class="text-slate-400 text-xs leading-tight">a.n. Ramdan Hidayah</p>
+
+    <!-- Bottom: Pembayaran full width -->
+    <div class="border-t border-slate-700 pt-8">
+      <h3 class="font-bold text-white mb-4 text-sm">Pembayaran</h3>
+      <div class="flex flex-wrap gap-3">
+        <!-- DANA -->
+        <div class="bg-slate-700 rounded-xl px-4 py-3 flex items-center gap-3 min-w-[160px]">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg" alt="DANA" class="h-5 object-contain">
+          <div>
+            <p class="font-mono font-bold text-white text-xs">082320781747</p>
+            <p class="text-slate-400 text-xs">a.n. Ramdan Hidayah</p>
+          </div>
         </div>
         <!-- OVO -->
-        <div class="bg-slate-700 rounded-xl p-3 flex flex-col items-center gap-2 text-center">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg" alt="OVO" class="h-6 object-contain">
-          <p class="font-mono font-bold text-white text-xs leading-tight">082320781747</p>
-          <p class="text-slate-400 text-xs leading-tight">a.n. Ramdan Hidayah</p>
+        <div class="bg-slate-700 rounded-xl px-4 py-3 flex items-center gap-3 min-w-[160px]">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg" alt="OVO" class="h-5 object-contain">
+          <div>
+            <p class="font-mono font-bold text-white text-xs">082320781747</p>
+            <p class="text-slate-400 text-xs">a.n. Ramdan Hidayah</p>
+          </div>
         </div>
         <!-- GoPay -->
-        <div class="bg-slate-700 rounded-xl p-3 flex flex-col items-center gap-2 text-center">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Gopay_logo.svg" alt="GoPay" class="h-6 object-contain">
-          <p class="font-mono font-bold text-white text-xs leading-tight">082320781747</p>
-          <p class="text-slate-400 text-xs leading-tight">a.n. Ramdan Hidayah</p>
+        <div class="bg-slate-700 rounded-xl px-4 py-3 flex items-center gap-3 min-w-[160px]">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Gopay_logo.svg" alt="GoPay" class="h-5 object-contain">
+          <div>
+            <p class="font-mono font-bold text-white text-xs">082320781747</p>
+            <p class="text-slate-400 text-xs">a.n. Ramdan Hidayah</p>
+          </div>
         </div>
+        <!-- WhatsApp -->
+        <a href="https://wa.me/{{ cfg.contact_wa }}" target="_blank"
+           class="bg-slate-700 hover:bg-green-700 rounded-xl px-4 py-3 flex items-center gap-3 transition-colors">
+          <i class="fa-brands fa-whatsapp text-green-400 text-xl"></i>
+          <div>
+            <p class="font-mono font-bold text-white text-xs">082320781747</p>
+            <p class="text-slate-400 text-xs">WhatsApp</p>
+          </div>
+        </a>
       </div>
-      <a href="https://wa.me/{{ cfg.contact_wa }}" target="_blank" class="flex items-center gap-2 mt-2 text-sm text-slate-400 hover:text-green-400 transition-colors">
-        <i class="fa-brands fa-whatsapp text-green-400"></i> 082320781747
-      </a>
     </div>
   </div>
+
   <div class="border-t border-slate-700 py-4 text-center text-xs text-slate-500">
     © {{ now.year }} Dayy Code. All rights reserved.
   </div>

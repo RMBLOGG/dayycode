@@ -15,11 +15,13 @@
     <div class="lg:col-span-2 space-y-5">
       <!-- Screenshot -->
       <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        {% if product.screenshots_list %}
+        {% set ss_list = product.screenshots_list if product.screenshots_list else [] %}
+        {% set thumb = product.thumbnail if product.thumbnail else (ss_list[0] if ss_list else '') %}
+        {% if thumb or ss_list %}
         <div class="aspect-video bg-slate-100 overflow-hidden">
-          <img src="{{ product.screenshots_list[0] }}" alt="{{ product.title }}" class="w-full h-full object-cover" id="mainImg">
+          <img src="{{ thumb }}" alt="{{ product.title }}" class="w-full h-full object-cover" id="mainImg">
         </div>
-        {% if product.screenshots_list|length > 1 %}
+        {% if ss_list|length > 1 %}
         <div class="flex gap-2 p-3 overflow-x-auto">
           {% for ss in product.screenshots_list %}
           <img src="{{ ss }}" onclick="document.getElementById('mainImg').src='{{ ss }}'"

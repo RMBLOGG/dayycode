@@ -8,8 +8,14 @@
     <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm h-fit space-y-4">
       <h2 class="font-extrabold text-slate-800">Ringkasan Pesanan</h2>
       <div class="flex items-start gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
-        <div class="w-14 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+        {% set ss_list = product.screenshots_list if product.screenshots_list else [] %}
+        {% set thumb = product.thumbnail if product.thumbnail else (ss_list[0] if ss_list else '') %}
+        <div class="w-14 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border border-blue-100">
+          {% if thumb %}
+          <img src="{{ thumb }}" class="w-full h-full object-cover rounded-xl" alt="{{ product.title }}">
+          {% else %}
           <i class="fa-solid fa-code text-blue-600 text-xl"></i>
+          {% endif %}
         </div>
         <div>
           <p class="font-bold text-slate-800 text-sm">{{ product.title }}</p>

@@ -1,0 +1,120 @@
+{% extends "admin/base.html" %}
+{% block title %}Pesanan #{{ order.order_number }}{% endblock %}
+{% block nav_orders %}nav-active{% endblock %}
+{% block content %}
+<div class="p-4 lg:p-6 max-w-3xl space-y-5">
+  <div class="flex items-center gap-3">
+    <a href="/admin/orders" class="w-9 h-9 bg-white border border-slate-200 flex items-center justify-center rounded-xl text-slate-500 hover:border-blue-400 hover:text-blue-600 transition-all shadow-sm">
+      <i class="fa-solid fa-arrow-left text-sm"></i>
+    </a>
+    <div>
+      <h1 class="text-xl font-extrabold text-slate-800">Detail Pesanan</h1>
+      <p class="font-mono font-bold text-blue-600 text-sm">#{{ order.order_number }}</p>
+    </div>
+  </div>
+
+  {% set sc = {'pending':'bg-yellow-100 text-yellow-700 border-yellow-200','waiting_confirm':'bg-blue-100 text-blue-700 border-blue-200','approved':'bg-green-100 text-green-700 border-green-200','rejected':'bg-red-100 text-red-700 border-red-200'} %}
+  {% set sl = {'pending':'Menunggu Pembayaran','waiting_confirm':'Menunggu Konfirmasi','approved':'Approved','rejected':'Ditolak'} %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 space-y-4">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <h2 class="font-bold text-slate-700 mb-4 text-sm">Info Pembeli</h2>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div><p class="text-slate-400 text-xs font-semibold mb-0.5">Nama</p><p class="font-semibold text-slate-800">{{ order.customer_name }}</p></div>
+          <div><p class="text-slate-400 text-xs font-semibold mb-0.5">Email</p><p class="font-semibold text-slate-800 break-all text-xs">{{ order.customer_email }}</p></div>
+          {% if order.customer_whatsapp %}
+          <div><p class="text-slate-400 text-xs font-semibold mb-0.5">WhatsApp</p>
+            <a href="https://wa.me/{{ order.customer_whatsapp }}" target="_blank" class="font-semibold text-green-600 hover:underline">{{ order.customer_whatsapp }}</a>
+          </div>
+          {% endif %}
+          <div><p class="text-slate-400 text-xs font-semibold mb-0.5">Tanggal</p><p class="font-mono text-slate-700 text-xs">{{ order.created_at[:16] }}</p></div>
+          <div class="col-span-2"><p class="text-slate-400 text-xs font-semibold mb-0.5">Produk</p><p class="font-semibold text-slate-800">{{ order.product_title }}</p></div>
+          <div class="col-span-2"><p class="text-slate-400 text-xs font-semibold mb-0.5">Total</p><p class="font-extrabold text-blue-600 font-mono text-xl">{{ fmt(order.amount) }}</p></div>
+        </div>
+      </div>
+
+      {% if order.payment_proof %}
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <h2 class="font-bold text-slate-700 mb-3 text-sm">Bukti Pembayaran</h2>
+        <img src="/static/uploads/{{ order.payment_proof }}" alt="Bukti bayar" class="max-w-sm rounded-xl border border-slate-200 shadow-sm">
+      </div>
+      {% endif %}
+
+      {% if order.download_token %}
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <h2 class="font-bold text-slate-700 mb-3 text-sm">Link Download</h2>
+        <div class="bg-green-50 border border-green-200 rounded-xl p-3">
+          <p class="text-xs text-slate-500 mb-1">Token URL:</p>
+          <p class="font-mono text-blue-600 text-xs break-all">/download/{{ order.download_token }}</p>
+          <p class="text-xs text-slate-400 mt-2">Expires: {{ order.download_expires[:16] if order.download_expires else '-' }}</p>
+          <p class="text-xs text-slate-400">Downloaded: {{ order.download_count }}x</p>
+        </div>
+      </div>
+      {% endif %}
+
+      {% if order.note %}
+      <div class="bg-red-50 border border-red-200 rounded-2xl p-4">
+        <p class="text-red-600 font-semibold text-sm">Catatan: {{ order.note }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Actions Sidebar -->
+    <div class="space-y-3">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <h2 class="font-bold text-slate-700 mb-3 text-sm">Status</h2>
+        <div class="inline-flex px-3 py-1.5 rounded-xl text-sm font-bold border mb-4 {{ sc.get(order.status,'bg-slate-100 text-slate-600 border-slate-200') }}">
+          {{ sl.get(order.status, order.status) }}
+        </div>
+        {% if order.status == 'waiting_confirm' %}
+        <div class="space-y-2">
+          <button onclick="approveOrder({{ order.id }})" class="w-full py-2.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl font-bold text-sm transition-all border border-green-200 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-check"></i> Approve & Generate Link
+          </button>
+          <button onclick="rejectOrder({{ order.id }})" class="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm transition-all border border-red-200 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-xmark"></i> Tolak
+          </button>
+        </div>
+        {% elif order.status == 'pending' %}
+        <p class="text-slate-400 text-xs">Menunggu pembeli upload bukti transfer.</p>
+        {% elif order.status == 'approved' %}
+        <button onclick="regenerateLink({{ order.id }})" class="w-full py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-blue-600 rounded-xl text-xs font-bold transition-all">
+          <i class="fa-solid fa-rotate mr-1.5"></i>Generate Ulang Link
+        </button>
+        {% endif %}
+      </div>
+
+      {% if order.customer_whatsapp %}
+      <a href="https://wa.me/{{ order.customer_whatsapp }}?text=Halo {{ order.customer_name|urlencode }}, pesanan Anda %23{{ order.order_number }}." target="_blank"
+        class="flex items-center justify-center gap-2 w-full py-2.5 border border-green-200 bg-green-50 hover:bg-green-100 text-green-700 font-bold rounded-xl text-sm transition-all shadow-sm">
+        <i class="fa-brands fa-whatsapp text-lg"></i> WhatsApp Pembeli
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function approveOrder(id) {
+  if (!confirm('Approve dan generate link download?')) return;
+  const res = await api(`/api/admin/orders/${id}/approve`, { method:'POST', body:'{}' });
+  if (res.ok) { showToast('Approved! Link: ' + res.download_url); setTimeout(()=>location.reload(), 1500); }
+  else showToast('Gagal!', 'error');
+}
+async function rejectOrder(id) {
+  const note = prompt('Alasan penolakan:');
+  if (note === null) return;
+  const res = await api(`/api/admin/orders/${id}/reject`, { method:'POST', body: JSON.stringify({note}) });
+  if (res.ok) { showToast('Pesanan ditolak.', 'warn'); setTimeout(()=>location.reload(), 1000); }
+  else showToast('Gagal!', 'error');
+}
+async function regenerateLink(id) {
+  if (!confirm('Generate ulang link download?')) return;
+  const res = await api(`/api/admin/orders/${id}/approve`, { method:'POST', body:'{}' });
+  if (res.ok) { showToast('Link baru digenerate!'); setTimeout(()=>location.reload(), 1500); }
+  else showToast('Gagal!', 'error');
+}
+</script>
+{% endblock %}

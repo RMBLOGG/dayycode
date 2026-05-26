@@ -1,0 +1,100 @@
+{% extends "admin/base.html" %}
+{% block title %}Pengaturan{% endblock %}
+{% block nav_settings %}nav-active{% endblock %}
+{% block nav_settings_m %}bottom-nav-active{% endblock %}
+{% block content %}
+<div class="p-4 lg:p-6 max-w-2xl space-y-5">
+  <h1 class="text-xl font-extrabold text-slate-800">Pengaturan Toko</h1>
+
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+    <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm"><i class="fa-solid fa-globe text-blue-600"></i> Informasi Site</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div><label class="sx">Nama Site</label><input type="text" id="sSiteName" value="{{ cfg.site_name }}" class="sinp"></div>
+      <div><label class="sx">Tagline</label><input type="text" id="sTagline" value="{{ cfg.site_tagline }}" class="sinp"></div>
+      <div class="sm:col-span-2"><label class="sx">Deskripsi</label><textarea id="sDesc" rows="2" class="sinp resize-none">{{ cfg.site_description }}</textarea></div>
+      <div><label class="sx">Email Kontak</label><input type="email" id="sEmail" value="{{ cfg.contact_email }}" class="sinp"></div>
+      <div><label class="sx">WhatsApp (628xxx)</label><input type="text" id="sWa" value="{{ cfg.contact_wa }}" class="sinp font-mono"></div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+    <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm"><i class="fa-solid fa-building-columns text-blue-600"></i> Rekening Bank</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div><label class="sx">Nama Bank</label><input type="text" id="sBankName" value="{{ cfg.bank_name }}" class="sinp"></div>
+      <div><label class="sx">No. Rekening</label><input type="text" id="sBankAcc" value="{{ cfg.bank_account }}" class="sinp font-mono"></div>
+      <div><label class="sx">Atas Nama</label><input type="text" id="sBankHolder" value="{{ cfg.bank_holder }}" class="sinp"></div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+    <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm"><i class="fa-solid fa-wallet text-purple-600"></i> E-Wallet</h2>
+    <p class="text-xs text-slate-400">Kosongkan jika tidak digunakan. Atas nama mengikuti field "Atas Nama" di Rekening Bank.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <label class="sx flex items-center gap-1.5">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg" class="h-3.5"> No. DANA
+        </label>
+        <input type="text" id="sDana" value="{{ cfg.dana_number }}" class="sinp font-mono" placeholder="08xxxxxxxxxx">
+      </div>
+      <div>
+        <label class="sx flex items-center gap-1.5">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg" class="h-3.5"> No. OVO
+        </label>
+        <input type="text" id="sOvo" value="{{ cfg.ovo_number }}" class="sinp font-mono" placeholder="08xxxxxxxxxx">
+      </div>
+      <div>
+        <label class="sx flex items-center gap-1.5">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Gopay_logo.svg" class="h-3.5"> No. GoPay
+        </label>
+        <input type="text" id="sGopay" value="{{ cfg.gopay_number }}" class="sinp font-mono" placeholder="08xxxxxxxxxx">
+      </div>
+    </div>
+    <div>
+      <label class="sx">Atas Nama (E-Wallet)</label>
+      <input type="text" id="sPaymentHolder" value="{{ cfg.payment_holder }}" class="sinp" placeholder="Nama pemilik e-wallet">
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+    <h2 class="font-bold text-slate-700 flex items-center gap-2 text-sm"><i class="fa-solid fa-download text-blue-600"></i> Pengaturan Download</h2>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="sx">Masa Aktif Link (Jam)</label><input type="number" id="sExpiry" value="{{ cfg.download_expiry_hours }}" class="sinp font-mono"></div>
+      <div><label class="sx">Max Download per Link</label><input type="number" id="sMaxDl" value="{{ cfg.max_download }}" class="sinp font-mono"></div>
+    </div>
+  </div>
+
+  <button onclick="saveSettings()" class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95">
+    <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan
+  </button>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function saveSettings() {
+  const d = {
+    site_name: document.getElementById('sSiteName').value,
+    site_tagline: document.getElementById('sTagline').value,
+    site_description: document.getElementById('sDesc').value,
+    contact_email: document.getElementById('sEmail').value,
+    contact_wa: document.getElementById('sWa').value,
+    bank_name: document.getElementById('sBankName').value,
+    bank_account: document.getElementById('sBankAcc').value,
+    bank_holder: document.getElementById('sBankHolder').value,
+    dana_number: document.getElementById('sDana').value,
+    ovo_number: document.getElementById('sOvo').value,
+    gopay_number: document.getElementById('sGopay').value,
+    payment_holder: document.getElementById('sPaymentHolder').value,
+    download_expiry_hours: document.getElementById('sExpiry').value,
+    max_download: document.getElementById('sMaxDl').value,
+  };
+  const res = await api('/api/admin/settings', { method:'POST', body: JSON.stringify(d) });
+  if (res.ok) { showToast('Pengaturan disimpan!'); setTimeout(()=>location.reload(), 800); }
+  else showToast('Gagal!', 'error');
+}
+</script>
+<style>
+  .sx { display:block; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; }
+  .sinp { width:100%; padding:9px 12px; background:white; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; transition:border-color .15s; font-family:inherit; color:#1e293b; }
+  .sinp:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.1); }
+</style>
+{% endblock %}

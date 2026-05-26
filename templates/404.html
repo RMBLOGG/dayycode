@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}404 — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="text-center py-24 px-4">
+  <div class="text-8xl mb-4">😕</div>
+  <h1 class="text-3xl font-extrabold text-slate-800 mb-2">Halaman Tidak Ditemukan</h1>
+  <p class="text-slate-500 mb-6">Halaman yang kamu cari tidak ada.</p>
+  <a href="/" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-md">
+    <i class="fa-solid fa-house"></i> Kembali ke Beranda
+  </a>
+</div>
+{% endblock %}

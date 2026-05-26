@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{% block title %}Admin{% endblock %} — {{ cfg.site_name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']}}}}</script>
+  <style>
+    body{background:#f8fafc;}
+    ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px;}
+    .nav-active{background:#eff6ff!important;color:#2563eb!important;}
+    .nav-active i{color:#2563eb!important;}
+    .bottom-nav-active{color:#60a5fa!important;}
+    .bottom-nav-active i{color:#60a5fa!important;}
+    @supports(padding-bottom:env(safe-area-inset-bottom)){
+      .pb-safe{padding-bottom:env(safe-area-inset-bottom);}
+    }
+  </style>
+</head>
+<body class="font-sans antialiased text-slate-800">
+
+<aside class="hidden lg:flex flex-col fixed top-0 left-0 h-screen w-56 bg-slate-900 z-40">
+  <div class="flex items-center gap-2.5 px-5 py-5 border-b border-white/10">
+    <div class="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
+      <i class="fa-solid fa-code text-white text-xs"></i>
+    </div>
+    <div>
+      <p class="text-white font-extrabold text-sm">{{ cfg.site_name }}</p>
+      <p class="text-slate-400 text-[10px]">Admin Panel</p>
+    </div>
+  </div>
+  <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+    <a href="/admin/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.07] text-sm font-medium transition-all {% block nav_dash %}{% endblock %}">
+      <i class="fa-solid fa-chart-line w-4 text-center"></i>Dashboard
+    </a>
+    <a href="/admin/orders" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.07] text-sm font-medium transition-all {% block nav_orders %}{% endblock %}">
+      <i class="fa-solid fa-receipt w-4 text-center"></i>Pesanan
+    </a>
+    <a href="/admin/products" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.07] text-sm font-medium transition-all {% block nav_products %}{% endblock %}">
+      <i class="fa-solid fa-code w-4 text-center"></i>Produk
+    </a>
+    <a href="/admin/settings" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.07] text-sm font-medium transition-all {% block nav_settings %}{% endblock %}">
+      <i class="fa-solid fa-gear w-4 text-center"></i>Pengaturan
+    </a>
+    <hr class="border-white/10 my-2">
+    <a href="/" target="_blank" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/[0.07] text-sm font-medium transition-all">
+      <i class="fa-solid fa-arrow-up-right-from-square w-4 text-center"></i>Lihat Site
+    </a>
+  </nav>
+  <div class="px-3 py-4 border-t border-white/10">
+    <div class="flex items-center gap-2 px-2">
+      <div class="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold">{{ session.admin_name[0].upper() if session.admin_name else 'A' }}</div>
+      <span class="text-slate-300 text-xs font-semibold flex-1 truncate">{{ session.admin_name }}</span>
+      <a href="/admin/logout" class="text-slate-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-right-from-bracket text-xs"></i></a>
+    </div>
+  </div>
+</aside>
+
+<!-- Mobile Top Header (no hamburger) -->
+<header class="lg:hidden bg-slate-900 text-white px-4 py-3 flex items-center sticky top-0 z-40">
+  <div class="flex items-center gap-2">
+    <div class="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-code text-xs"></i></div>
+    <span class="font-extrabold text-sm">{{ cfg.site_name }}</span>
+  </div>
+  <span class="ml-auto text-xs text-slate-400 font-medium">Admin Panel</span>
+</header>
+
+<!-- Mobile Bottom Navigation -->
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-white/10 pb-safe">
+  <div class="flex items-stretch">
+    <a href="/admin/dashboard" class="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-slate-400 hover:text-white transition-colors {% block nav_dash_m %}{% endblock %}">
+      <i class="fa-solid fa-chart-line text-base"></i>
+      <span class="text-[10px] font-semibold">Dashboard</span>
+    </a>
+    <a href="/admin/orders" class="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-slate-400 hover:text-white transition-colors {% block nav_orders_m %}{% endblock %}">
+      <i class="fa-solid fa-receipt text-base"></i>
+      <span class="text-[10px] font-semibold">Pesanan</span>
+    </a>
+    <a href="/admin/products" class="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-slate-400 hover:text-white transition-colors {% block nav_products_m %}{% endblock %}">
+      <i class="fa-solid fa-code text-base"></i>
+      <span class="text-[10px] font-semibold">Produk</span>
+    </a>
+    <a href="/admin/settings" class="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-slate-400 hover:text-white transition-colors {% block nav_settings_m %}{% endblock %}">
+      <i class="fa-solid fa-gear text-base"></i>
+      <span class="text-[10px] font-semibold">Pengaturan</span>
+    </a>
+    <a href="/admin/logout" class="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-slate-400 hover:text-red-400 transition-colors">
+      <i class="fa-solid fa-right-from-bracket text-base"></i>
+      <span class="text-[10px] font-semibold">Logout</span>
+    </a>
+  </div>
+</nav>
+
+<main class="lg:ml-56 min-h-screen bg-slate-50 pb-20 lg:pb-0">{% block content %}{% endblock %}</main>
+
+<div id="_toast" class="fixed top-4 right-4 z-[999] px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg whitespace-nowrap pointer-events-none opacity-0 transition-all duration-300 -translate-y-2 flex items-center gap-2"></div>
+
+<script>
+function showToast(msg,type='success'){
+  const t=document.getElementById('_toast');
+  const colors={success:'background:#f0fdf4;border:1px solid #86efac;color:#15803d',error:'background:#fef2f2;border:1px solid #fca5a5;color:#dc2626',warn:'background:#fffbeb;border:1px solid #fcd34d;color:#b45309'};
+  t.textContent=msg;t.style.cssText=colors[type]||colors.success;
+  t.classList.remove('opacity-0','-translate-y-2');t.classList.add('opacity-100','translate-y-0');
+  clearTimeout(t._t);t._t=setTimeout(()=>{t.classList.add('opacity-0','-translate-y-2');t.classList.remove('opacity-100','translate-y-0');},3000);
+}
+async function api(url,opts={}){const res=await fetch(url,{headers:{'Content-Type':'application/json'},...opts});return res.json();}
+function fmt(n){return'Rp '+Number(n||0).toLocaleString('id-ID');}
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

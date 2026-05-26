@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Cek Pesanan — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto px-4 py-14">
+  <h1 class="text-2xl font-extrabold text-slate-800 mb-6 text-center"><i class="fa-solid fa-box-open mr-2 text-blue-600"></i>Cek Status Pesanan</h1>
+  <form action="/track" method="get" class="bg-white rounded-2xl border border-slate-200 p-5 mb-5 shadow-sm">
+    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nomor Pesanan</label>
+    <div class="flex gap-3">
+      <input type="text" name="no" value="{{ order_number }}" placeholder="SC20240101XXXX"
+        class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors font-mono text-slate-800">
+      <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-all">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+    </div>
+  </form>
+  {% if order_number and not order %}
+  <div class="bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-sm">
+    <i class="fa-solid fa-circle-xmark text-red-400 text-3xl mb-2 block"></i>
+    <p class="font-bold text-slate-700">Pesanan tidak ditemukan</p>
+    <p class="text-slate-400 text-sm mt-1">Periksa kembali nomor pesanan</p>
+  </div>
+  {% elif order %}
+  <a href="/order/{{ order.order_number }}" class="block bg-white border border-slate-200 rounded-2xl p-5 hover:border-blue-300 hover:shadow-md transition-all shadow-sm">
+    <div class="flex justify-between items-start">
+      <div>
+        <p class="font-mono font-bold text-blue-600">#{{ order.order_number }}</p>
+        <p class="font-semibold text-slate-800 mt-0.5">{{ order.product_title }}</p>
+        <p class="text-slate-400 text-sm">{{ order.customer_name }}</p>
+      </div>
+      <div class="text-right">
+        <p class="font-mono font-bold text-slate-800">{{ fmt_rp(order.amount) }}</p>
+        {% set colors = {'pending':'text-yellow-600','waiting_confirm':'text-blue-600','approved':'text-green-600','rejected':'text-red-500'} %}
+        <p class="text-xs font-bold {{ colors.get(order.status,'text-slate-400') }} mt-1 capitalize">{{ order.status }}</p>
+      </div>
+    </div>
+    <p class="text-blue-600 text-sm font-semibold mt-3"><i class="fa-solid fa-arrow-right mr-1"></i>Lihat detail pesanan</p>
+  </a>
+  {% endif %}
+</div>
+{% endblock %}

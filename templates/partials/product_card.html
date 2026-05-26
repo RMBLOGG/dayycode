@@ -1,0 +1,51 @@
+<div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all group">
+  <a href="/product/{{ p.slug }}" class="block relative">
+    <div class="aspect-video bg-slate-100 flex items-center justify-center overflow-hidden">
+      {% set screenshots = parse_json(p.screenshots) if p.screenshots else [] %}
+      {% if screenshots %}
+        <img src="{{ screenshots[0] }}" alt="{{ p.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+      {% else %}
+        <div class="text-center p-4">
+          <i class="fa-solid fa-code text-4xl text-blue-200 mb-2 block"></i>
+          <span class="text-xs text-slate-400 font-mono">{{ p.tech_stack[:25] if p.tech_stack else 'Source Code' }}</span>
+        </div>
+      {% endif %}
+    </div>
+    {% if p.original_price and p.original_price > p.price %}
+    <span class="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-extrabold px-2 py-1 rounded-full">
+      -{{ ((1 - p.price/p.original_price)*100)|int }}%
+    </span>
+    {% endif %}
+    {% if p.featured %}
+    <span class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full">⭐ Unggulan</span>
+    {% endif %}
+  </a>
+  <div class="p-3">
+    {% if p.cat_name %}
+    <span class="inline-flex text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full mb-1.5">{{ p.cat_name }}</span>
+    {% endif %}
+    <a href="/product/{{ p.slug }}">
+      <p class="text-sm font-bold text-slate-800 line-clamp-2 hover:text-blue-600 transition-colors leading-snug mb-1">{{ p.title }}</p>
+    </a>
+    <p class="text-xs text-slate-400 line-clamp-1 mb-2">{{ p.short_desc }}</p>
+    {% if p.tech_stack %}
+    <div class="flex flex-wrap gap-1 mb-2">
+      {% for tech in p.tech_stack.split(',')[:3] %}
+      <span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">{{ tech.strip() }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="flex items-center justify-between mt-2">
+      <div>
+        <span class="font-extrabold font-mono text-blue-600 text-sm">{{ fmt_rp(p.price) }}</span>
+        {% if p.original_price and p.original_price > p.price %}
+        <span class="font-mono text-xs text-slate-400 line-through ml-1">{{ fmt_rp(p.original_price) }}</span>
+        {% endif %}
+      </div>
+      <a href="/buy/{{ p.slug }}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all active:scale-95 shadow-sm">
+        Beli
+      </a>
+    </div>
+    <p class="text-[10px] text-slate-400 mt-1.5"><i class="fa-solid fa-download mr-1"></i>{{ p.sales or 0 }} terjual</p>
+  </div>
+</div>

@@ -1,0 +1,372 @@
+{% extends "admin/base.html" %}
+{% block title %}Produk{% endblock %}
+{% block nav_products %}nav-active{% endblock %}
+{% block nav_products_m %}bottom-nav-active{% endblock %}
+{% block content %}
+<div class="p-4 lg:p-6 space-y-5">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <h1 class="text-xl font-extrabold text-slate-800">Source Code</h1>
+    <button onclick="openAdd()" class="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-sm transition-all active:scale-95">
+      <i class="fa-solid fa-plus"></i> Tambah Produk
+    </button>
+  </div>
+
+  <div class="space-y-3">
+    {% for p in products %}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 hover:border-blue-200 hover:shadow-md transition-all {{ 'opacity-50' if not p.active }}">
+      <div class="flex items-start gap-4">
+        <div class="w-16 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border border-blue-100">
+          {% if p.thumbnail %}
+          <img src="{{ p.thumbnail }}" class="w-full h-full object-cover rounded-xl">
+          {% else %}
+          {% set ss = p.screenshots | parse_json %}
+          {% if ss %}
+          <img src="{{ ss[0] }}" class="w-full h-full object-cover rounded-xl">
+          {% else %}
+          <i class="fa-solid fa-code text-blue-400"></i>
+          {% endif %}
+          {% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <p class="font-bold text-slate-800">{{ p.title }}</p>
+              <p class="text-slate-400 text-xs mt-0.5">{{ p.cat_name or '-' }} · v{{ p.version }}</p>
+              <div class="flex flex-wrap gap-1 mt-1.5">
+                {% for t in p.tech_stack.split(',')[:4] if p.tech_stack %}
+                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-mono border border-slate-200">{{ t.strip() }}</span>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="font-mono font-extrabold text-blue-600">{{ fmt_rp(p.price) }}</p>
+              {% if p.original_price and p.original_price > p.price %}
+              <p class="font-mono text-xs text-slate-400 line-through">{{ fmt_rp(p.original_price) }}</p>
+              {% endif %}
+              <p class="text-xs text-slate-400 mt-1">{{ p.sales }} terjual</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+        <button onclick="openEdit({{ p.id }})" class="flex-1 py-2 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-600 hover:text-blue-600 rounded-xl text-xs font-bold transition-all">
+          <i class="fa-solid fa-pen mr-1.5"></i>Edit
+        </button>
+        <button onclick="openUploadFile({{ p.id }}, '{{ p.title|replace("'","") }}')" class="flex-1 py-2 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-600 hover:text-blue-600 rounded-xl text-xs font-bold transition-all">
+          <i class="fa-solid fa-file-zipper mr-1.5"></i>Upload File
+        </button>
+        <button onclick="openUploadSS({{ p.id }})" class="flex-1 py-2 bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-slate-600 hover:text-purple-600 rounded-xl text-xs font-bold transition-all">
+          <i class="fa-solid fa-image mr-1.5"></i>Screenshot
+        </button>
+        <button onclick="deleteProduct({{ p.id }})" class="py-2 px-3 bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-slate-400 hover:text-red-500 rounded-xl text-xs font-bold transition-all">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-slate-400 bg-white rounded-2xl border border-slate-200 shadow-sm">
+      <i class="fa-solid fa-code text-4xl mb-3 block text-slate-300"></i>
+      Belum ada produk
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Product Modal -->
+<div id="prodModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-slate-200">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100 sticky top-0 bg-white">
+      <h2 class="font-extrabold text-slate-800" id="modalTitle">Tambah Produk</h2>
+      <button onclick="closeModal()" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center text-slate-500 transition-colors"><i class="fa-solid fa-xmark text-xs"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div><label class="alx">Judul *</label><input id="fTitle" type="text" placeholder="Nama source code" class="ainp"></div>
+      <div><label class="alx">Deskripsi Singkat</label><input id="fShortDesc" type="text" placeholder="1-2 kalimat deskripsi" class="ainp"></div>
+      <div><label class="alx">Deskripsi Lengkap</label><textarea id="fDesc" rows="4" placeholder="Deskripsi lengkap produk..." class="ainp resize-none"></textarea></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="alx">Kategori</label>
+          <select id="fCat" class="ainp bg-white">
+            <option value="">-- Pilih --</option>
+            {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label class="alx">Versi</label><input id="fVersion" type="text" placeholder="1.0" class="ainp"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="alx">Harga (Rp) *</label><input id="fPrice" type="number" placeholder="0" class="ainp font-mono"></div>
+        <div><label class="alx">Harga Coret (Rp)</label><input id="fOrigPrice" type="number" placeholder="0" class="ainp font-mono"></div>
+      </div>
+      <div><label class="alx">Tech Stack</label><input id="fTech" type="text" placeholder="Flask, SQLite, Tailwind CSS" class="ainp"></div>
+      <div>
+        <label class="alx">Fitur (1 per baris)</label>
+        <textarea id="fFeatures" rows="5" placeholder="Login & Register&#10;Dashboard Admin&#10;Export CSV" class="ainp resize-none font-mono text-xs"></textarea>
+      </div>
+      <div><label class="alx">URL Demo (opsional)</label><input id="fDemo" type="url" placeholder="https://demo.example.com" class="ainp"></div>
+      <div><label class="alx">URL File Eksternal (opsional)</label><input id="fFileUrl" type="url" placeholder="https://drive.google.com/..." class="ainp"></div>
+      
+      <!-- Thumbnail Upload -->
+      <div>
+        <label class="alx">Thumbnail Produk</label>
+        <div id="thumbPreviewBox" class="hidden mb-2 relative w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-50" style="aspect-ratio:16/9;">
+          <img id="thumbPreviewImg" src="" class="w-full h-full object-cover">
+          <button type="button" onclick="removeThumbnail()" class="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs transition-colors"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="thumbDropzone" class="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl p-4 text-center cursor-pointer transition-colors bg-slate-50 hover:bg-blue-50" onclick="document.getElementById('fThumb').click()">
+          <i class="fa-solid fa-image text-slate-300 text-2xl mb-1 block"></i>
+          <p class="text-xs text-slate-400 font-semibold">Klik untuk pilih gambar</p>
+          <p class="text-[10px] text-slate-300 mt-0.5">JPG, PNG, WEBP — maks 5MB</p>
+        </div>
+        <input type="file" id="fThumb" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden">
+        <input type="hidden" id="fThumbUrl">
+        <div id="thumbUploadStatus" class="hidden mt-2 text-xs font-semibold flex items-center gap-1.5"></div>
+      </div>
+
+      <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+        <label class="text-sm font-semibold text-slate-600 mb-0">Produk Unggulan (tampil di homepage)</label>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="fFeatured" class="sr-only peer">
+          <div class="w-10 h-5 bg-slate-200 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+        </label>
+      </div>
+    </div>
+    <div class="p-4 border-t border-slate-100 flex gap-3 sticky bottom-0 bg-white">
+      <button onclick="closeModal()" class="flex-1 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-slate-600 font-bold text-sm transition-colors">Batal</button>
+      <button onclick="saveProduct()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-white font-bold text-sm transition-colors shadow-sm"><i class="fa-solid fa-check mr-1.5"></i>Simpan</button>
+    </div>
+    <input type="hidden" id="editId">
+  </div>
+</div>
+
+<!-- Upload File Modal -->
+<div id="fileModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-sm border border-slate-200">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-bold text-slate-800">Upload File Source Code</h2>
+      <button onclick="closeFileModal()" class="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500"><i class="fa-solid fa-xmark text-xs"></i></button>
+    </div>
+    <p class="text-slate-700 text-sm mb-1 font-semibold" id="fileProductName"></p>
+    <p class="text-slate-400 text-xs mb-4">Upload file ZIP/RAR. Atau isi URL eksternal di form edit.</p>
+    <input type="file" id="srcFile" class="block w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:font-bold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 transition-all">
+    <button onclick="doUploadFile()" class="mt-4 w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-colors shadow-sm">
+      <i class="fa-solid fa-upload mr-1.5"></i>Upload
+    </button>
+    <input type="hidden" id="fileProductId">
+  </div>
+</div>
+
+<!-- Screenshot Modal -->
+<div id="ssModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-xl p-5 w-full max-w-sm border border-slate-200">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-bold text-slate-800">Upload Screenshot</h2>
+      <button onclick="closeSSModal()" class="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500"><i class="fa-solid fa-xmark text-xs"></i></button>
+    </div>
+    <input type="file" id="ssFile" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:font-bold file:bg-purple-50 file:text-purple-600 hover:file:bg-purple-100 transition-all">
+    <button onclick="doUploadSS()" class="mt-4 w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-sm transition-colors shadow-sm">
+      <i class="fa-solid fa-image mr-1.5"></i>Upload Screenshot
+    </button>
+    <input type="hidden" id="ssProductId">
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const products = {{ products | tojson }};
+const categories = {{ categories | tojson }};
+
+function openAdd() {
+  document.getElementById('modalTitle').textContent = 'Tambah Produk';
+  ['fTitle','fShortDesc','fDesc','fTech','fDemo','fFileUrl','fPrice','fOrigPrice'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fVersion').value = '1.0';
+  document.getElementById('fFeatures').value = '';
+  document.getElementById('fCat').value = '';
+  document.getElementById('fFeatured').checked = false;
+  document.getElementById('editId').value = '';
+  document.getElementById('fThumbUrl').value = '';
+  document.getElementById('fThumb').value = '';
+  document.getElementById('thumbPreviewBox').classList.add('hidden');
+  document.getElementById('thumbDropzone').classList.remove('hidden');
+  document.getElementById('thumbUploadStatus').classList.add('hidden');
+  document.getElementById('prodModal').classList.remove('hidden');
+}
+function openEdit(id) {
+  const p = products.find(x => x.id === id); if (!p) return;
+  document.getElementById('modalTitle').textContent = 'Edit Produk';
+  document.getElementById('fTitle').value = p.title;
+  document.getElementById('fShortDesc').value = p.short_desc || '';
+  document.getElementById('fDesc').value = p.description || '';
+  document.getElementById('fCat').value = p.category_id || '';
+  document.getElementById('fVersion').value = p.version || '1.0';
+  document.getElementById('fPrice').value = p.price;
+  document.getElementById('fOrigPrice').value = p.original_price || '';
+  document.getElementById('fTech').value = p.tech_stack || '';
+  document.getElementById('fDemo').value = p.demo_url || '';
+  document.getElementById('fFileUrl').value = p.file_url || '';
+  document.getElementById('fFeatured').checked = p.featured == 1;
+  try { document.getElementById('fFeatures').value = JSON.parse(p.features || '[]').join('\n'); } catch(e) { document.getElementById('fFeatures').value = ''; }
+  document.getElementById('editId').value = id;
+  // Load thumbnail if exists
+  const thumbUrl = p.thumbnail || '';
+  document.getElementById('fThumbUrl').value = thumbUrl;
+  document.getElementById('fThumb').value = '';
+  document.getElementById('thumbUploadStatus').classList.add('hidden');
+  if (thumbUrl) {
+    document.getElementById('thumbPreviewImg').src = thumbUrl;
+    document.getElementById('thumbPreviewBox').classList.remove('hidden');
+    document.getElementById('thumbDropzone').classList.add('hidden');
+  } else {
+    document.getElementById('thumbPreviewBox').classList.add('hidden');
+    document.getElementById('thumbDropzone').classList.remove('hidden');
+  }
+  document.getElementById('prodModal').classList.remove('hidden');
+}
+
+// Thumbnail file picker - upload immediately on select
+document.getElementById('fThumb').addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('Ukuran gambar maks 5MB!', 'error'); this.value = ''; return; }
+
+  // Show local preview first
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('thumbPreviewImg').src = e.target.result;
+    document.getElementById('thumbPreviewBox').classList.remove('hidden');
+    document.getElementById('thumbDropzone').classList.add('hidden');
+  };
+  reader.readAsDataURL(file);
+
+  const id = document.getElementById('editId').value;
+  if (!id) {
+    // New product: store file for later, will upload after product created
+    document.getElementById('fThumbUrl').value = '';
+    return;
+  }
+
+  // Existing product: upload immediately
+  setThumbStatus('Mengupload ke Cloudinary...', 'loading');
+  const form = new FormData();
+  form.append('image', file);
+  try {
+    const res = await fetch(`/api/admin/products/${id}/upload-thumbnail`, { method: 'POST', body: form });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('fThumbUrl').value = data.url;
+      setThumbStatus('Thumbnail tersimpan!', 'ok');
+    } else {
+      setThumbStatus(data.error || 'Upload gagal', 'error');
+    }
+  } catch(e) {
+    setThumbStatus(`Gagal: ${e.message}`, 'error');
+  }
+});
+
+function removeThumbnail() {
+  document.getElementById('fThumb').value = '';
+  document.getElementById('fThumbUrl').value = '';
+  document.getElementById('thumbPreviewBox').classList.add('hidden');
+  document.getElementById('thumbDropzone').classList.remove('hidden');
+}
+
+function setThumbStatus(msg, type) {
+  const el = document.getElementById('thumbUploadStatus');
+  const colors = {loading:'text-blue-500', ok:'text-green-600', error:'text-red-500'};
+  const icons  = {loading:'fa-spinner fa-spin', ok:'fa-check-circle', error:'fa-circle-exclamation'};
+  el.innerHTML = `<i class="fa-solid ${icons[type]}"></i>${msg}`;
+  el.className = `mt-2 text-xs font-semibold flex items-center gap-1.5 ${colors[type]}`;
+  el.classList.remove('hidden');
+}
+
+function closeModal() { document.getElementById('prodModal').classList.add('hidden'); }
+async function saveProduct() {
+  const id = document.getElementById('editId').value;
+  const features = document.getElementById('fFeatures').value.split('\n').map(f=>f.trim()).filter(Boolean);
+  const thumbUrl = document.getElementById('fThumbUrl').value;
+  const thumbFile = document.getElementById('fThumb').files[0];
+
+  // Block save if thumbnail is still uploading
+  const statusEl = document.getElementById('thumbUploadStatus');
+  if (thumbFile && !thumbUrl && id) {
+    showToast('Tunggu thumbnail selesai upload!', 'warn'); return;
+  }
+
+  const body = {
+    title: document.getElementById('fTitle').value.trim(),
+    short_desc: document.getElementById('fShortDesc').value,
+    description: document.getElementById('fDesc').value,
+    category_id: document.getElementById('fCat').value || null,
+    version: document.getElementById('fVersion').value || '1.0',
+    price: document.getElementById('fPrice').value,
+    original_price: document.getElementById('fOrigPrice').value || 0,
+    tech_stack: document.getElementById('fTech').value,
+    features, demo_url: document.getElementById('fDemo').value,
+    file_url: document.getElementById('fFileUrl').value,
+    featured: document.getElementById('fFeatured').checked ? 1 : 0, active: 1,
+    thumbnail: thumbUrl
+  };
+  if (!body.title || !body.price) { showToast('Judul & harga wajib!', 'error'); return; }
+
+  const url = id ? `/api/admin/products/${id}` : '/api/admin/products';
+  const res = await api(url, { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) });
+
+  if (res.ok || res.id) {
+    // New product + thumbnail file pending → upload now with the new id
+    const newId = res.id || id;
+    if (!id && thumbFile && newId) {
+      const form = new FormData(); form.append('image', thumbFile);
+      await fetch(`/api/admin/products/${newId}/upload-thumbnail`, { method:'POST', body: form });
+    }
+    showToast(id ? 'Produk diperbarui!' : 'Produk ditambahkan!');
+    setTimeout(()=>location.reload(), 800);
+  } else {
+    showToast(res.error || 'Gagal simpan!', 'error');
+  }
+}
+async function deleteProduct(id) {
+  if (!confirm('Hapus produk ini?')) return;
+  const res = await api(`/api/admin/products/${id}`, { method:'DELETE' });
+  if (res.ok) { showToast('Produk dihapus!'); setTimeout(()=>location.reload(), 600); }
+}
+function openUploadFile(id, name) {
+  document.getElementById('fileProductId').value = id;
+  document.getElementById('fileProductName').textContent = name;
+  document.getElementById('srcFile').value = '';
+  document.getElementById('fileModal').classList.remove('hidden');
+}
+function closeFileModal() { document.getElementById('fileModal').classList.add('hidden'); }
+async function doUploadFile() {
+  const file = document.getElementById('srcFile').files[0];
+  if (!file) { showToast('Pilih file dulu!', 'warn'); return; }
+  const id = document.getElementById('fileProductId').value;
+  const form = new FormData(); form.append('file', file);
+  const res = await fetch(`/api/admin/products/${id}/upload-file`, { method:'POST', body: form });
+  const data = await res.json();
+  if (data.ok) { showToast('File berhasil diupload!'); closeFileModal(); }
+  else showToast(data.error || 'Gagal!', 'error');
+}
+function openUploadSS(id) {
+  document.getElementById('ssProductId').value = id;
+  document.getElementById('ssFile').value = '';
+  document.getElementById('ssModal').classList.remove('hidden');
+}
+function closeSSModal() { document.getElementById('ssModal').classList.add('hidden'); }
+async function doUploadSS() {
+  const file = document.getElementById('ssFile').files[0];
+  if (!file) { showToast('Pilih gambar dulu!', 'warn'); return; }
+  const id = document.getElementById('ssProductId').value;
+  const form = new FormData(); form.append('image', file);
+  const res = await fetch(`/api/admin/products/${id}/upload-screenshot`, { method:'POST', body: form });
+  const data = await res.json();
+  if (data.ok) { showToast('Screenshot berhasil diupload!'); closeSSModal(); }
+  else showToast(data.error || 'Gagal!', 'error');
+}
+</script>
+<style>
+  .alx { display:block; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; }
+  .ainp { width:100%; padding:9px 12px; background:white; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; transition:border-color .15s; font-family:inherit; color:#1e293b; }
+  .ainp:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.1); }
+  .ainp::placeholder { color:#94a3b8; }
+</style>
+{% endblock %}

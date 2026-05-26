@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}{{ cfg.site_name }} — {{ cfg.site_tagline }}{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 text-white">
+  <div class="max-w-6xl mx-auto px-4 py-14 lg:py-20 flex flex-col lg:flex-row items-center gap-10">
+    <div class="flex-1 text-center lg:text-left">
+      <span class="inline-flex items-center gap-2 bg-white/20 backdrop-blur px-3 py-1.5 rounded-full text-xs font-bold mb-4">
+        <i class="fa-solid fa-bolt text-yellow-300"></i> {{ stats.total_products }}+ Source Code Siap Pakai
+      </span>
+      <h1 class="text-3xl lg:text-5xl font-extrabold leading-tight mb-4">{{ cfg.site_tagline }}</h1>
+      <p class="text-blue-100 text-base lg:text-lg mb-8 max-w-lg mx-auto lg:mx-0">{{ cfg.site_description }}</p>
+      <div class="flex flex-wrap gap-3 justify-center lg:justify-start">
+        <a href="/products" class="px-6 py-3 bg-white text-blue-600 font-extrabold rounded-xl hover:shadow-lg transition-all hover:-translate-y-0.5 active:scale-95">
+          <i class="fa-solid fa-store mr-2"></i>Lihat Produk
+        </a>
+        <a href="/track" class="px-6 py-3 bg-white/20 backdrop-blur text-white font-bold rounded-xl hover:bg-white/30 transition-all">
+          <i class="fa-solid fa-box-open mr-2"></i>Cek Pesanan
+        </a>
+      </div>
+    </div>
+    <div class="hidden lg:flex flex-shrink-0 items-center justify-center w-72 h-56 bg-white/10 backdrop-blur rounded-3xl">
+      <i class="fa-solid fa-code text-white/40 text-8xl"></i>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="bg-white border-b border-slate-100 shadow-sm">
+  <div class="max-w-6xl mx-auto px-4 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="flex items-center gap-3 text-sm">
+      <div class="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-download text-blue-600"></i></div>
+      <div><p class="font-bold text-slate-700">Download Instan</p><p class="text-slate-400 text-xs">Setelah konfirmasi</p></div>
+    </div>
+    <div class="flex items-center gap-3 text-sm">
+      <div class="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-shield-halved text-green-600"></i></div>
+      <div><p class="font-bold text-slate-700">Kode Bersih</p><p class="text-slate-400 text-xs">Siap production</p></div>
+    </div>
+    <div class="flex items-center gap-3 text-sm">
+      <div class="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-headset text-purple-600"></i></div>
+      <div><p class="font-bold text-slate-700">Support Aktif</p><p class="text-slate-400 text-xs">Via WhatsApp</p></div>
+    </div>
+    <div class="flex items-center gap-3 text-sm">
+      <div class="w-9 h-9 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-tags text-orange-600"></i></div>
+      <div><p class="font-bold text-slate-700">Harga Terjangkau</p><p class="text-slate-400 text-xs">Mulai ribuan</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="max-w-6xl mx-auto px-4 py-8">
+  <div class="grid grid-cols-3 gap-4">
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 text-center shadow-sm">
+      <p class="text-3xl font-extrabold text-blue-600 font-mono">{{ stats.total_products }}+</p>
+      <p class="text-slate-500 text-sm mt-1">Source Code</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 text-center shadow-sm">
+      <p class="text-3xl font-extrabold text-blue-600 font-mono">{{ stats.total_sales }}+</p>
+      <p class="text-slate-500 text-sm mt-1">Terjual</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 text-center shadow-sm">
+      <p class="text-3xl font-extrabold text-blue-600 font-mono">{{ categories|length }}</p>
+      <p class="text-slate-500 text-sm mt-1">Kategori</p>
+    </div>
+  </div>
+</section>
+
+<!-- Categories -->
+<section class="max-w-6xl mx-auto px-4 pb-10">
+  <h2 class="text-xl font-extrabold text-slate-800 mb-5">Kategori</h2>
+  <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
+    {% set cat_colors = ['bg-blue-50 text-blue-600','bg-purple-50 text-purple-600','bg-green-50 text-green-600','bg-orange-50 text-orange-600','bg-pink-50 text-pink-600','bg-cyan-50 text-cyan-600'] %}
+    {% for cat in categories %}
+    <a href="/products?cat={{ cat.slug }}" class="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all group text-center">
+      <div class="w-11 h-11 rounded-xl {{ cat_colors[loop.index0 % 6] }} flex items-center justify-center group-hover:scale-110 transition-transform">
+        <i class="fa-solid {{ cat.icon }} text-lg"></i>
+      </div>
+      <span class="text-xs font-bold text-slate-600">{{ cat.name }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Featured -->
+{% if featured %}
+<section class="max-w-6xl mx-auto px-4 pb-10">
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h2 class="text-xl font-extrabold text-slate-800">Produk Unggulan</h2>
+      <p class="text-slate-500 text-sm">Paling banyak dibeli</p>
+    </div>
+    <a href="/products" class="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">Lihat Semua <i class="fa-solid fa-arrow-right"></i></a>
+  </div>
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    {% for p in featured %}{% include 'partials/product_card.html' %}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Latest -->
+{% if latest %}
+<section class="max-w-6xl mx-auto px-4 pb-10">
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h2 class="text-xl font-extrabold text-slate-800">Terbaru</h2>
+      <p class="text-slate-500 text-sm">Baru ditambahkan</p>
+    </div>
+    <a href="/products?sort=newest" class="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">Lihat Semua <i class="fa-solid fa-arrow-right"></i></a>
+  </div>
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    {% for p in latest %}{% include 'partials/product_card.html' %}{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- CTA -->
+<section class="max-w-6xl mx-auto px-4 pb-16">
+  <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-8 text-white text-center">
+    <i class="fa-brands fa-whatsapp text-4xl text-green-300 mb-3 block"></i>
+    <h3 class="text-xl font-extrabold mb-2">Ada pertanyaan?</h3>
+    <p class="text-blue-100 text-sm mb-5">Hubungi kami via WhatsApp, kami siap membantu!</p>
+    <a href="https://wa.me/{{ cfg.contact_wa }}" target="_blank"
+      class="inline-flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all shadow-lg hover:-translate-y-0.5">
+      <i class="fa-brands fa-whatsapp text-lg"></i> Chat WhatsApp
+    </a>
+  </div>
+</section>
+{% endblock %}

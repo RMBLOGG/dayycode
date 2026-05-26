@@ -1,0 +1,117 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block nav_dash %}nav-active{% endblock %}
+{% block nav_dash_m %}bottom-nav-active{% endblock %}
+{% block content %}
+<div class="p-4 lg:p-6 space-y-6">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <h1 class="text-xl font-extrabold text-slate-800">Dashboard</h1>
+    <a href="/" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all shadow-sm">
+      <i class="fa-solid fa-store"></i>Lihat Site
+    </a>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hari Ini</span>
+        <div class="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center"><i class="fa-solid fa-receipt text-blue-600 text-sm"></i></div>
+      </div>
+      <p class="text-2xl font-extrabold text-slate-800">{{ stats.orders_today }}</p>
+      <p class="text-xs text-slate-400 mt-0.5 font-mono">{{ fmt(stats.revenue_today) }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Bulan Ini</span>
+        <div class="w-8 h-8 bg-green-50 rounded-xl flex items-center justify-center"><i class="fa-solid fa-calendar text-green-600 text-sm"></i></div>
+      </div>
+      <p class="text-2xl font-extrabold text-slate-800">{{ stats.orders_month }}</p>
+      <p class="text-xs text-slate-400 mt-0.5 font-mono">{{ fmt(stats.revenue_month) }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm cursor-pointer hover:border-orange-300 transition-colors" onclick="window.location='/admin/orders?status=pending'">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending</span>
+        <div class="w-8 h-8 bg-orange-50 rounded-xl flex items-center justify-center"><i class="fa-solid fa-clock text-orange-500 text-sm"></i></div>
+      </div>
+      <p class="text-2xl font-extrabold {{ 'text-orange-500' if stats.pending > 0 else 'text-slate-800' }}">{{ stats.pending }}</p>
+      <p class="text-xs text-slate-400 mt-0.5">perlu dikonfirmasi</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Omzet</span>
+        <div class="w-8 h-8 bg-purple-50 rounded-xl flex items-center justify-center"><i class="fa-solid fa-sack-dollar text-purple-600 text-sm"></i></div>
+      </div>
+      <p class="text-lg font-extrabold text-slate-800 font-mono">{{ fmt(stats.total_sales) }}</p>
+      <p class="text-xs text-slate-400 mt-0.5">{{ stats.total_orders }} pesanan</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <h2 class="font-bold text-slate-700 text-sm mb-4">Penjualan 7 Hari Terakhir</h2>
+      <div style="position:relative;height:200px;width:100%"><canvas id="salesChart"></canvas></div>
+    </div>
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <h2 class="font-bold text-slate-700 text-sm mb-4">Produk Terlaris</h2>
+      <div class="space-y-3">
+        {% for p in top_products %}
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold text-blue-600">{{ loop.index }}</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-slate-700 truncate">{{ p.title }}</p>
+            <p class="text-xs text-slate-400">{{ p.sales }} terjual · {{ p.downloads }} download</p>
+          </div>
+        </div>
+        {% else %}
+        <p class="text-slate-400 text-sm text-center py-4">Belum ada data</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+      <h2 class="font-bold text-slate-700 text-sm">Pesanan Terbaru</h2>
+      <a href="/admin/orders" class="text-xs font-bold text-blue-600 hover:text-blue-700">Lihat Semua →</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 border-b border-slate-100">
+          <tr>
+            <th class="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">No. Pesanan</th>
+            <th class="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Pembeli</th>
+            <th class="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:table-cell">Produk</th>
+            <th class="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Total</th>
+            <th class="text-left px-5 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% set sc = {'pending':'bg-yellow-100 text-yellow-700','waiting_confirm':'bg-blue-100 text-blue-700','approved':'bg-green-100 text-green-700','rejected':'bg-red-100 text-red-700'} %}
+          {% set sl = {'pending':'Pending','waiting_confirm':'Konfirmasi','approved':'Approved','rejected':'Ditolak'} %}
+          {% for o in recent_orders %}
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-5 py-3"><a href="/admin/orders/{{ o.id }}" class="font-mono font-bold text-blue-600 hover:text-blue-700 text-xs">#{{ o.order_number }}</a></td>
+            <td class="px-5 py-3"><p class="font-semibold text-slate-700">{{ o.customer_name }}</p><p class="text-xs text-slate-400">{{ o.customer_email }}</p></td>
+            <td class="px-5 py-3 text-slate-500 text-xs hidden sm:table-cell">{{ o.product_title[:28] if o.product_title else '-' }}...</td>
+            <td class="px-5 py-3 font-mono font-bold text-slate-700">{{ fmt(o.amount) }}</td>
+            <td class="px-5 py-3"><span class="inline-flex px-2.5 py-1 rounded-full text-[11px] font-bold {{ sc.get(o.status,'bg-slate-100 text-slate-600') }}">{{ sl.get(o.status,o.status) }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const chartData = {{ chart | tojson }};
+const labels = chartData.map(r=>{ const d=new Date(r.date+'T00:00:00'); return d.toLocaleDateString('id-ID',{weekday:'short',day:'numeric'}); });
+new Chart(document.getElementById('salesChart').getContext('2d'), {
+  type:'bar',
+  data:{labels,datasets:[{data:chartData.map(r=>r.total),backgroundColor:'rgba(37,99,235,0.1)',borderColor:'#2563eb',borderWidth:2,borderRadius:8,borderSkipped:false}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'Rp '+c.raw.toLocaleString('id-ID')}}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'},ticks:{callback:v=>v>=1000000?'Rp '+(v/1000000).toFixed(1)+'jt':v>=1000?'Rp '+(v/1000).toFixed(0)+'k':'Rp '+v,font:{size:10},color:'#94a3b8'}},x:{grid:{display:false},ticks:{font:{size:10},color:'#94a3b8'}}}}
+});
+</script>
+{% endblock %}

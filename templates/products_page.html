@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Produk — {{ cfg.site_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <div class="flex flex-col lg:flex-row gap-6">
+
+    <!-- Sidebar Desktop -->
+    <aside class="hidden lg:block w-52 flex-shrink-0">
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 sticky top-24 shadow-sm">
+        <h3 class="font-bold text-slate-700 mb-3 text-sm">Kategori</h3>
+        <ul class="space-y-1">
+          <li><a href="/products{% if search %}?q={{ search }}{% endif %}"
+            class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all {{ 'bg-blue-50 text-blue-600 font-bold' if not cat_slug else 'text-slate-600 hover:bg-slate-50' }}">
+            <i class="fa-solid fa-store w-4 text-center text-slate-400"></i> Semua
+          </a></li>
+          {% for cat in categories %}
+          <li><a href="/products?cat={{ cat.slug }}{% if search %}&q={{ search }}{% endif %}"
+            class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all {{ 'bg-blue-50 text-blue-600 font-bold' if cat_slug == cat.slug else 'text-slate-600 hover:bg-slate-50' }}">
+            <i class="fa-solid {{ cat.icon }} w-4 text-center text-slate-400"></i> {{ cat.name }}
+          </a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="flex-1">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+          <h1 class="text-lg font-extrabold text-slate-800">
+            {% if search %}Hasil "{{ search }}"{% elif cat_slug %}{{ cat_slug|title|replace('-',' ') }}{% else %}Semua Produk{% endif %}
+          </h1>
+          <p class="text-slate-500 text-sm">{{ total }} produk ditemukan</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <select onchange="location.href=this.value" class="border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none bg-white text-slate-600 font-medium shadow-sm">
+            <option value="/products?{% if cat_slug %}cat={{ cat_slug }}&{% endif %}{% if search %}q={{ search }}&{% endif %}sort=newest" {% if sort=='newest' %}selected{% endif %}>Terbaru</option>
+            <option value="/products?{% if cat_slug %}cat={{ cat_slug }}&{% endif %}{% if search %}q={{ search }}&{% endif %}sort=popular" {% if sort=='popular' %}selected{% endif %}>Terpopuler</option>
+            <option value="/products?{% if cat_slug %}cat={{ cat_slug }}&{% endif %}{% if search %}q={{ search }}&{% endif %}sort=price_asc" {% if sort=='price_asc' %}selected{% endif %}>Harga ↑</option>
+            <option value="/products?{% if cat_slug %}cat={{ cat_slug }}&{% endif %}{% if search %}q={{ search }}&{% endif %}sort=price_desc" {% if sort=='price_desc' %}selected{% endif %}>Harga ↓</option>
+          </select>
+          <select onchange="location.href='/products?cat='+this.value+'{% if search %}&q={{ search }}{% endif %}'" class="lg:hidden border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none bg-white text-slate-600 font-medium">
+            <option value="">Semua</option>
+            {% for cat in categories %}<option value="{{ cat.slug }}" {% if cat_slug==cat.slug %}selected{% endif %}>{{ cat.name }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+
+      {% if products %}
+      <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-3 gap-4">
+        {% for p in products %}{% include 'partials/product_card.html' %}{% endfor %}
+      </div>
+      {% if pages > 1 %}
+      <div class="flex justify-center gap-2 mt-8">
+        {% for i in range(1, pages+1) %}
+        <a href="/products?{% if cat_slug %}cat={{ cat_slug }}&{% endif %}{% if search %}q={{ search }}&{% endif %}sort={{ sort }}&page={{ i }}"
+          class="w-9 h-9 rounded-xl font-bold text-sm flex items-center justify-center transition-all {{ 'bg-blue-600 text-white' if i==page else 'bg-white border border-slate-200 text-slate-600 hover:border-blue-400' }}">{{ i }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="text-center py-20 text-slate-400">
+        <i class="fa-solid fa-box-open text-5xl mb-4 block"></i>
+        <p class="text-lg font-bold">Produk tidak ditemukan</p>
+        <a href="/products" class="text-sm text-blue-600 hover:underline mt-2 inline-block">Lihat semua produk</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

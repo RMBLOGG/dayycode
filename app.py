@@ -207,12 +207,31 @@ def buy(slug):
     product = dict(rows[0])
 
     if request.method == 'POST':
-        data  = request.json
-        name  = data.get('name', '').strip()
-        email = data.get('email', '').strip()
-        wa    = data.get('whatsapp', '').strip()
+        data         = request.json
+        name         = data.get('name', '').strip()
+        email        = data.get('email', '').strip()
+        wa           = data.get('whatsapp', '').strip()
+        voucher_code = (data.get('voucher_code') or '').strip().upper()
+        discount_amt = 0
+        final_price  = product['price']
+
         if not name or not email:
             return jsonify({'error': 'Nama dan email wajib diisi'}), 400
+
+        # Validasi & apply voucher
+        if voucher_code:
+            sb_v = get_supabase()
+            vrows = sb_v.table('vouchers').select('*').eq('code', voucher_code).eq('active', True).limit(1).execute().data
+            if vrows:
+                v = vrows[0]
+                if v.get('discount_pct') and v['discount_pct'] > 0:
+                    discount_amt = int(product['price'] * v['discount_pct'] / 100)
+                else:
+                    discount_amt = int(v.get('discount_fix') or 0)
+                discount_amt = min(discount_amt, product['price'])
+                final_price  = product['price'] - discount_amt
+                # Increment used_count
+                sb_v.table('vouchers').update({'used_count': (v.get('used_count') or 0) + 1}).eq('id', v['id']).execute()
 
         order_num = gen_order_number()
         sb.table('orders').insert({
@@ -222,10 +241,12 @@ def buy(slug):
             'customer_whatsapp': wa,
             'product_id':        product['id'],
             'product_title':     product['title'],
-            'amount':            product['price'],
+            'amount':            final_price,
+            'voucher_code':      voucher_code,
+            'discount_amount':   discount_amt,
             'status':            'pending',
         }).execute()
-        return jsonify({'ok': True, 'order_number': order_num})
+        return jsonify({'ok': True, 'order_number': order_num, 'final_price': final_price, 'discount': discount_amt})
 
     return render_template('buy.html', product=product)
 
@@ -665,3 +686,186 @@ if __name__ == '__main__':
     print("🔐 Admin: http://localhost:5000/admin")
     print("   Login: admin / admin123\n")
     app.run(debug=True, port=5000)
+
+# ══════════════════════════════════════════════════════════
+# VOUCHER
+# ══════════════════════════════════════════════════════════
+@app.route('/api/voucher/check', methods=['POST'])
+def api_check_voucher():
+    d = request.json
+    code  = (d.get('code') or '').strip().upper()
+    price = int(d.get('price') or 0)
+    if not code:
+        return jsonify({'error': 'Kode tidak boleh kosong'}), 400
+
+    sb = get_supabase()
+    rows = sb.table('vouchers').select('*').eq('code', code).eq('active', True).limit(1).execute().data
+    if not rows:
+        return jsonify({'error': 'Kode voucher tidak valid'}), 404
+
+    v = rows[0]
+    # Cek expiry
+    if v.get('expires_at'):
+        exp = datetime.fromisoformat(v['expires_at'].replace('Z', '+00:00'))
+        from datetime import timezone
+        if datetime.now(timezone.utc) > exp:
+            return jsonify({'error': 'Voucher sudah kadaluarsa'}), 400
+    # Cek max uses
+    max_uses = v.get('max_uses') or 0
+    if max_uses > 0 and (v.get('used_count') or 0) >= max_uses:
+        return jsonify({'error': 'Voucher sudah habis digunakan'}), 400
+    # Cek min price
+    if price < (v.get('min_price') or 0):
+        return jsonify({'error': f"Minimum pembelian {fmt_rp(v['min_price'])}"}), 400
+
+    # Hitung diskon
+    if v.get('discount_pct') and v['discount_pct'] > 0:
+        disc = int(price * v['discount_pct'] / 100)
+    else:
+        disc = int(v.get('discount_fix') or 0)
+    disc = min(disc, price)
+    final = price - disc
+
+    return jsonify({
+        'ok': True,
+        'code': code,
+        'discount': disc,
+        'final_price': final,
+        'label': f"Diskon {v['discount_pct']}%" if v.get('discount_pct') else f"Diskon {fmt_rp(disc)}",
+    })
+
+
+# ══════════════════════════════════════════════════════════
+# REVIEW
+# ══════════════════════════════════════════════════════════
+@app.route('/api/review/submit', methods=['POST'])
+def api_submit_review():
+    d = request.json
+    order_number = (d.get('order_number') or '').strip()
+    rating       = int(d.get('rating') or 5)
+    comment      = (d.get('comment') or '').strip()[:500]
+    reviewer     = (d.get('reviewer') or 'Anonim').strip()[:80]
+
+    if not order_number:
+        return jsonify({'error': 'Order number required'}), 400
+    if not 1 <= rating <= 5:
+        return jsonify({'error': 'Rating 1-5'}), 400
+
+    sb = get_supabase()
+    # Validasi: order harus approved
+    rows = sb.table('orders').select('*').eq('order_number', order_number).eq('status', 'approved').limit(1).execute().data
+    if not rows:
+        return jsonify({'error': 'Order tidak ditemukan / belum dikonfirmasi'}), 404
+
+    order = rows[0]
+    # Cek duplikat
+    dup = sb.table('reviews').select('id').eq('order_number', order_number).limit(1).execute().data
+    if dup:
+        return jsonify({'error': 'Kamu sudah pernah memberikan review'}), 400
+
+    sb.table('reviews').insert({
+        'product_id':   order['product_id'],
+        'order_number': order_number,
+        'rating':       rating,
+        'comment':      comment,
+        'reviewer':     reviewer,
+        'approved':     False,
+    }).execute()
+
+    return jsonify({'ok': True, 'message': 'Review terkirim, menunggu moderasi'})
+
+
+@app.route('/api/review/product/<int:pid>')
+def api_product_reviews(pid):
+    sb = get_supabase()
+    rows = (
+        sb.table('reviews')
+        .select('id,rating,comment,reviewer,created_at')
+        .eq('product_id', pid)
+        .eq('approved', True)
+        .order('created_at', desc=True)
+        .limit(20)
+        .execute().data
+    )
+    total  = len(rows)
+    avg    = round(sum(r['rating'] for r in rows) / total, 1) if total else 0
+    return jsonify({'ok': True, 'reviews': rows, 'avg': avg, 'total': total})
+
+
+# ══════════════════════════════════════════════════════════
+# ADMIN – VOUCHER CRUD
+# ══════════════════════════════════════════════════════════
+@app.route('/admin/vouchers')
+@admin_required
+def admin_vouchers():
+    sb = get_supabase()
+    vouchers = sb.table('vouchers').select('*').order('created_at', desc=True).execute().data
+    return render_template('admin/vouchers.html', vouchers=vouchers)
+
+@app.route('/api/admin/vouchers', methods=['POST'])
+@admin_required
+def api_add_voucher():
+    d  = request.json
+    sb = get_supabase()
+    code = (d.get('code') or '').strip().upper()
+    if not code:
+        return jsonify({'error': 'Kode wajib diisi'}), 400
+    sb.table('vouchers').insert({
+        'code':         code,
+        'discount_pct': int(d.get('discount_pct') or 0),
+        'discount_fix': int(d.get('discount_fix') or 0),
+        'min_price':    int(d.get('min_price') or 0),
+        'max_uses':     int(d.get('max_uses') or 0),
+        'active':       bool(d.get('active', True)),
+        'expires_at':   d.get('expires_at') or None,
+    }).execute()
+    return jsonify({'ok': True}), 201
+
+@app.route('/api/admin/vouchers/<int:vid>', methods=['PUT'])
+@admin_required
+def api_update_voucher(vid):
+    d  = request.json
+    sb = get_supabase()
+    sb.table('vouchers').update({
+        'discount_pct': int(d.get('discount_pct') or 0),
+        'discount_fix': int(d.get('discount_fix') or 0),
+        'min_price':    int(d.get('min_price') or 0),
+        'max_uses':     int(d.get('max_uses') or 0),
+        'active':       bool(d.get('active', True)),
+        'expires_at':   d.get('expires_at') or None,
+    }).eq('id', vid).execute()
+    return jsonify({'ok': True})
+
+@app.route('/api/admin/vouchers/<int:vid>', methods=['DELETE'])
+@admin_required
+def api_delete_voucher(vid):
+    get_supabase().table('vouchers').delete().eq('id', vid).execute()
+    return jsonify({'ok': True})
+
+
+# ══════════════════════════════════════════════════════════
+# ADMIN – REVIEW MODERATION
+# ══════════════════════════════════════════════════════════
+@app.route('/admin/reviews')
+@admin_required
+def admin_reviews():
+    sb = get_supabase()
+    pending  = sb.table('reviews').select('*, products(title)').eq('approved', False).order('created_at', desc=True).execute().data
+    approved = sb.table('reviews').select('*, products(title)').eq('approved', True).order('created_at', desc=True).limit(50).execute().data
+    return render_template('admin/reviews.html', pending=pending, approved=approved)
+
+@app.route('/api/admin/reviews/<int:rid>/approve', methods=['POST'])
+@admin_required
+def api_approve_review(rid):
+    get_supabase().table('reviews').update({'approved': True}).eq('id', rid).execute()
+    return jsonify({'ok': True})
+
+@app.route('/api/admin/reviews/<int:rid>', methods=['DELETE'])
+@admin_required
+def api_delete_review(rid):
+    get_supabase().table('reviews').delete().eq('id', rid).execute()
+    return jsonify({'ok': True})
+
+
+# Update route buy agar support voucher — override dengan patch di JS
+# (buy POST sudah simpan voucher_code & discount_amount, lihat template buy.html)

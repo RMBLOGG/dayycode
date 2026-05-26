@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Wishlist — {{ cfg.site_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <div>
+      <h1 class="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-heart text-pink-500"></i> Wishlist
+      </h1>
+      <p class="text-slate-400 text-sm mt-0.5">Produk yang kamu simpan</p>
+    </div>
+    <button onclick="clearWishlist()"
+      id="clearBtn"
+      class="hidden text-xs px-3 py-2 border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-500 rounded-xl font-bold transition-all">
+      <i class="fa-solid fa-trash mr-1.5"></i>Hapus Semua
+    </button>
+  </div>
+
+  <!-- Empty state -->
+  <div id="emptyState" class="hidden text-center py-20">
+    <i class="fa-regular fa-heart text-6xl text-slate-200 block mb-4"></i>
+    <p class="text-slate-400 font-semibold text-lg">Wishlist masih kosong</p>
+    <p class="text-slate-300 text-sm mt-1 mb-6">Simpan produk favorit kamu dengan klik ikon ❤️</p>
+    <a href="/products" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all text-sm">
+      <i class="fa-solid fa-arrow-left"></i> Lihat Produk
+    </a>
+  </div>
+
+  <!-- Grid -->
+  <div id="wishlistGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function getWishlist() {
+  try { return JSON.parse(localStorage.getItem('srcmarket_wishlist') || '[]'); } catch { return []; }
+}
+function saveWishlist(list) { localStorage.setItem('srcmarket_wishlist', JSON.stringify(list)); }
+
+function removeItem(id) {
+  let list = getWishlist().filter(i => i.id !== id);
+  saveWishlist(list);
+  document.getElementById(`wl-card-${id}`)?.remove();
+  updateCount();
+  if (list.length === 0) showEmpty();
+  showToast('Dihapus dari wishlist');
+}
+
+function clearWishlist() {
+  if (!confirm('Hapus semua item dari wishlist?')) return;
+  saveWishlist([]);
+  document.getElementById('wishlistGrid').innerHTML = '';
+  showEmpty();
+}
+
+function showEmpty() {
+  document.getElementById('emptyState').classList.remove('hidden');
+  document.getElementById('clearBtn').classList.add('hidden');
+}
+
+function updateCount() {
+  const n = getWishlist().length;
+  const badge = document.getElementById('wlBadge');
+  if (badge) badge.textContent = n > 0 ? n : '';
+}
+
+async function renderWishlist() {
+  const list = getWishlist();
+  const grid  = document.getElementById('wishlistGrid');
+
+  if (list.length === 0) { showEmpty(); return; }
+
+  document.getElementById('clearBtn').classList.remove('hidden');
+
+  // Fetch product detail tiap item dari API
+  const results = await Promise.allSettled(
+    list.map(item => fetch(`/api/wishlist/product/${item.id}`).then(r => r.json()))
+  );
+
+  let html = '';
+  results.forEach((res, idx) => {
+    const item = list[idx];
+    const p = res.status === 'fulfilled' && res.value.ok ? res.value.product : null;
+
+    const thumb = p?.thumbnail || (p?.screenshots_list?.[0]) || '';
+    const price = p ? p.price : null;
+    const origPrice = p?.original_price;
+    const title = p?.title || item.title;
+    const slug  = p?.slug  || item.slug;
+    const sales = p?.sales || 0;
+    const discPct = origPrice && origPrice > price ? Math.round((1 - price/origPrice)*100) : 0;
+
+    html += `
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-pink-300 hover:shadow-lg transition-all group relative" id="wl-card-${item.id}">
+      <!-- Remove btn -->
+      <button onclick="removeItem(${item.id})"
+        class="absolute top-2 right-2 z-10 w-7 h-7 bg-white/90 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-slate-300 hover:text-red-400 rounded-lg flex items-center justify-center transition-all shadow-sm">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
+
+      <a href="/product/${slug}" class="block relative">
+        ${thumb
+          ? `<div class="aspect-video bg-slate-100 overflow-hidden"><img src="${thumb}" alt="${title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"></div>`
+          : `<div class="aspect-video bg-slate-100 flex items-center justify-center"><i class="fa-solid fa-code text-3xl text-blue-200"></i></div>`
+        }
+        ${discPct > 0 ? `<span class="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">-${discPct}%</span>` : ''}
+      </a>
+
+      <div class="p-3">
+        <a href="/product/${slug}">
+          <p class="text-sm font-bold text-slate-800 line-clamp-2 hover:text-blue-600 transition-colors leading-snug mb-2">${title}</p>
+        </a>
+        ${price !== null ? `
+        <div class="flex items-center justify-between mt-1">
+          <div>
+            <span class="font-extrabold font-mono text-blue-600 text-sm">Rp ${parseInt(price).toLocaleString('id-ID')}</span>
+            ${origPrice && origPrice > price ? `<span class="font-mono text-xs text-slate-400 line-through ml-1">Rp ${parseInt(origPrice).toLocaleString('id-ID')}</span>` : ''}
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-400 mt-1"><i class="fa-solid fa-download mr-1"></i>${sales} terjual</p>
+        <a href="/buy/${slug}" class="mt-2.5 block w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs text-center rounded-xl transition-all active:scale-95">
+          <i class="fa-solid fa-bolt mr-1"></i>Beli Sekarang
+        </a>
+        ` : `<p class="text-xs text-slate-400 italic">Produk tidak tersedia</p>`}
+      </div>
+    </div>`;
+  });
+
+  grid.innerHTML = html;
+}
+
+renderWishlist();
+</script>
+{% endblock %}

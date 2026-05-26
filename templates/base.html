@@ -164,7 +164,7 @@
 
 <!-- Footer -->
 <footer class="bg-slate-800 text-slate-300 mt-16">
-  <div class="max-w-6xl mx-auto px-4 py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+  <div class="max-w-6xl mx-auto px-4 py-10 grid grid-cols-2 lg:grid-cols-4 gap-8">
     <div>
       <div class="flex items-center gap-2 mb-3">
         <div class="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center"><img src="/static/icon.png" class="w-full h-full object-contain"></div>
@@ -221,10 +221,12 @@
 </footer>
 
 <!-- WA Float -->
+{% if not hide_wa_float %}
 <a href="https://wa.me/{{ cfg.contact_wa }}" target="_blank"
   class="fixed bottom-6 right-6 w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg shadow-green-500/30 flex items-center justify-center transition-all hover:scale-110 z-30">
   <i class="fa-brands fa-whatsapp text-2xl"></i>
 </a>
+{% endif %}
 
 <!-- Toast -->
 <div id="_toast" class="fixed top-4 right-4 z-[999] px-4 py-3 rounded-xl text-sm font-semibold shadow-lg whitespace-nowrap pointer-events-none opacity-0 transition-all duration-300 -translate-y-2 flex items-center gap-2"></div>

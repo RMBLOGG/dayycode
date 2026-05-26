@@ -22,16 +22,15 @@
           <p class="text-slate-400 text-xs mt-0.5">{{ product.cat_name or 'Source Code' }}</p>
         </div>
       </div>
-      <div class="space-y-2 text-sm">
-        <div class="flex justify-between text-slate-500"><span>Harga</span><span class="font-mono font-bold text-slate-800">{{ fmt_rp(product.price) }}</span></div>
+      <div class="space-y-2 text-sm" id="priceBreakdown">
+        <div class="flex justify-between text-slate-500"><span>Harga</span><span class="font-mono font-bold text-slate-800" id="origPriceDisplay">{{ fmt_rp(product.price) }}</span></div>
+        <div class="flex justify-between text-green-600 hidden" id="discountRow"><span id="discountLabel">Diskon</span><span class="font-mono font-bold" id="discountDisplay">-Rp 0</span></div>
         <hr class="border-slate-100">
-        <div class="flex justify-between font-extrabold text-base"><span>Total</span><span class="font-mono text-blue-600">{{ fmt_rp(product.price) }}</span></div>
+        <div class="flex justify-between font-extrabold text-base"><span>Total</span><span class="font-mono text-blue-600" id="totalDisplay">{{ fmt_rp(product.price) }}</span></div>
       </div>
       <!-- Payment Info -->
       <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
         <p class="text-xs font-bold text-blue-700 uppercase tracking-wider">Transfer ke:</p>
-
-        <!-- Bank Transfer -->
         {% if cfg.bank_account %}
         <div class="bg-white rounded-lg px-3 py-2.5 flex items-center gap-3 border border-slate-100">
           <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -44,8 +43,6 @@
           </div>
         </div>
         {% endif %}
-
-        <!-- DANA -->
         {% if cfg.dana_number %}
         <div class="bg-white rounded-lg px-3 py-2.5 flex items-center gap-3 border border-slate-100">
           <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0 p-1.5">
@@ -58,8 +55,6 @@
           </div>
         </div>
         {% endif %}
-
-        <!-- OVO -->
         {% if cfg.ovo_number %}
         <div class="bg-white rounded-lg px-3 py-2.5 flex items-center gap-3 border border-slate-100">
           <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0 p-1.5">
@@ -72,8 +67,6 @@
           </div>
         </div>
         {% endif %}
-
-        <!-- GoPay -->
         {% if cfg.gopay_number %}
         <div class="bg-white rounded-lg px-3 py-2.5 flex items-center gap-3 border border-slate-100">
           <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0 p-1.5">
@@ -86,9 +79,8 @@
           </div>
         </div>
         {% endif %}
-
         <div class="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p class="text-yellow-700 text-xs font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Transfer tepat <span class="font-mono">{{ fmt_rp(product.price) }}</span></p>
+          <p class="text-yellow-700 text-xs font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Transfer tepat sesuai total di atas</p>
         </div>
       </div>
       <div class="space-y-1.5 text-xs text-slate-400">
@@ -115,6 +107,20 @@
           <label class="blabel">WhatsApp (opsional)</label>
           <input id="bWa" type="tel" placeholder="08xxxxxxxxxx" class="binp">
         </div>
+
+        <!-- Voucher -->
+        <div>
+          <label class="blabel">Kode Voucher / Diskon</label>
+          <div class="flex gap-2">
+            <input id="bVoucher" type="text" placeholder="Masukkan kode..." class="binp uppercase flex-1" oninput="this.value=this.value.toUpperCase()">
+            <button onclick="checkVoucher()" id="voucherBtn"
+              class="px-4 py-2.5 bg-slate-100 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-600 hover:text-blue-600 font-bold rounded-xl text-sm transition-all whitespace-nowrap">
+              Pakai
+            </button>
+          </div>
+          <div id="voucherMsg" class="mt-1.5 text-xs hidden"></div>
+        </div>
+
         <button onclick="submitOrder()" id="orderBtn"
           class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-95">
           <i class="fa-solid fa-lock"></i> Buat Pesanan
@@ -151,16 +157,57 @@
 
 {% block scripts %}
 <script>
-let orderNumber = '';
+const ORIG_PRICE = {{ product.price }};
+let orderNumber  = '';
+let appliedVoucher = '';
+let finalPrice   = ORIG_PRICE;
+let discountAmt  = 0;
+
+function fmtRp(n) {
+  return 'Rp ' + parseInt(n).toLocaleString('id-ID');
+}
+
+async function checkVoucher() {
+  const code = document.getElementById('bVoucher').value.trim();
+  if (!code) { showToast('Masukkan kode voucher dulu', 'warn'); return; }
+  const btn = document.getElementById('voucherBtn');
+  btn.disabled = true; btn.textContent = '...';
+  const res = await apiFetch('/api/voucher/check', { method: 'POST', body: JSON.stringify({ code, price: ORIG_PRICE }) });
+  btn.disabled = false; btn.textContent = 'Pakai';
+  const msg = document.getElementById('voucherMsg');
+  msg.classList.remove('hidden');
+  if (res.ok) {
+    appliedVoucher = res.code;
+    discountAmt    = res.discount;
+    finalPrice     = res.final_price;
+    msg.className  = 'mt-1.5 text-xs text-green-600 font-semibold';
+    msg.innerHTML  = `<i class="fa-solid fa-circle-check mr-1"></i>${res.label} — hemat ${fmtRp(res.discount)}`;
+    document.getElementById('discountRow').classList.remove('hidden');
+    document.getElementById('discountLabel').textContent = res.label;
+    document.getElementById('discountDisplay').textContent = '- ' + fmtRp(res.discount);
+    document.getElementById('totalDisplay').textContent = fmtRp(res.final_price);
+    showToast('Voucher berhasil dipakai!');
+  } else {
+    appliedVoucher = ''; discountAmt = 0; finalPrice = ORIG_PRICE;
+    msg.className  = 'mt-1.5 text-xs text-red-500 font-semibold';
+    msg.innerHTML  = `<i class="fa-solid fa-circle-xmark mr-1"></i>${res.error}`;
+    document.getElementById('discountRow').classList.add('hidden');
+    document.getElementById('totalDisplay').textContent = fmtRp(ORIG_PRICE);
+  }
+}
+
 async function submitOrder() {
-  const name = document.getElementById('bName').value.trim();
+  const name  = document.getElementById('bName').value.trim();
   const email = document.getElementById('bEmail').value.trim();
-  const wa = document.getElementById('bWa').value.trim();
-  if (!name) { showToast('Nama wajib diisi!', 'error'); return; }
+  const wa    = document.getElementById('bWa').value.trim();
+  if (!name)  { showToast('Nama wajib diisi!', 'error'); return; }
   if (!email || !email.includes('@')) { showToast('Email tidak valid!', 'error'); return; }
   const btn = document.getElementById('orderBtn');
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Memproses...';
-  const res = await apiFetch('/buy/{{ product.slug }}', { method:'POST', body: JSON.stringify({name, email, whatsapp: wa}) });
+  const res = await apiFetch('/buy/{{ product.slug }}', {
+    method: 'POST',
+    body: JSON.stringify({ name, email, whatsapp: wa, voucher_code: appliedVoucher })
+  });
   if (res.ok) {
     orderNumber = res.order_number;
     document.getElementById('orderNumDisplay').textContent = orderNumber;
@@ -185,9 +232,9 @@ async function uploadProof() {
   const btn = document.getElementById('uploadBtn');
   btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Mengupload...';
   const form = new FormData(); form.append('proof', file);
-  const res = await fetch(`/api/upload-proof/${orderNumber}`, { method:'POST', body: form });
+  const res = await fetch(`/api/upload-proof/${orderNumber}`, { method: 'POST', body: form });
   const data = await res.json();
-  if (data.ok) { showToast('Bukti dikirim! Menunggu konfirmasi.'); setTimeout(()=>window.location.href='/order/'+orderNumber, 1500); }
+  if (data.ok) { showToast('Bukti dikirim! Menunggu konfirmasi.'); setTimeout(() => window.location.href = '/order/' + orderNumber, 1500); }
   else { showToast(data.error || 'Gagal upload', 'error'); btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-upload"></i> Kirim Bukti Bayar'; }
 }
 </script>

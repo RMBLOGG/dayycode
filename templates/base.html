@@ -249,6 +249,62 @@ async function apiFetch(url, opts={}) {
   const res = await fetch(url, { headers:{'Content-Type':'application/json'}, ...opts });
   return res.json();
 }
+
+// ── WISHLIST (global) ──────────────────────────────────────
+function getWishlist() {
+  try { return JSON.parse(localStorage.getItem('srcmarket_wishlist') || '[]'); } catch { return []; }
+}
+function saveWishlist(list) { localStorage.setItem('srcmarket_wishlist', JSON.stringify(list)); }
+
+function cardToggleWishlist(id, title, slug) {
+  let list = getWishlist();
+  const idx = list.findIndex(i => i.id === id);
+  const btn = document.getElementById(`wl-${id}`);
+  if (idx >= 0) {
+    list.splice(idx, 1);
+    if (btn) btn.innerHTML = '<i class="fa-regular fa-heart text-xs"></i>';
+    if (btn) btn.classList.remove('border-pink-300','text-pink-500','bg-pink-50');
+    showToast('Dihapus dari wishlist');
+  } else {
+    list.push({ id, title, slug });
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-heart text-xs text-pink-500"></i>';
+    if (btn) btn.classList.add('border-pink-300','text-pink-500','bg-pink-50');
+    showToast('Ditambahkan ke wishlist ❤️');
+  }
+  saveWishlist(list);
+}
+
+// ── CARD RATINGS (lazy, batch per page) ───────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Init wishlist state on all cards
+  const wl = getWishlist();
+  wl.forEach(item => {
+    const btn = document.getElementById(`wl-${item.id}`);
+    if (btn) {
+      btn.innerHTML = '<i class="fa-solid fa-heart text-xs text-pink-500"></i>';
+      btn.classList.add('border-pink-300','text-pink-500','bg-pink-50');
+    }
+  });
+
+  // Load ratings for all product cards on page
+  const pids = [...new Set([...document.querySelectorAll('.card-stars')].map(el => el.dataset.pid))];
+  pids.forEach(pid => {
+    fetch(`/api/review/product/${pid}`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.ok || data.total === 0) return;
+        const avg = data.avg;
+        const starsEl = document.querySelector(`.card-stars[data-pid="${pid}"]`);
+        const avgEl   = document.querySelector(`.card-avg[data-pid="${pid}"]`);
+        if (starsEl) {
+          starsEl.innerHTML = Array.from({length:5}, (_,i) =>
+            `<i class="fa-${i < Math.round(avg) ? 'solid' : 'regular'} fa-star text-yellow-400 text-xs"></i>`
+          ).join('');
+        }
+        if (avgEl) avgEl.textContent = `${avg} (${data.total})`;
+      }).catch(() => {});
+  });
+});
 </script>
 {% block scripts %}{% endblock %}
 </body>

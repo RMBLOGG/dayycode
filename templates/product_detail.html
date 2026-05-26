@@ -103,6 +103,12 @@
           <i class="fa-solid fa-bolt mr-2"></i>Beli Sekarang
         </a>
 
+        <button onclick="toggleWishlist({{ product.id }}, '{{ product.title|replace("'","") }}', '{{ product.slug }}')"
+          id="wishlistBtn"
+          class="block w-full py-3 border border-slate-200 text-slate-500 hover:border-pink-400 hover:text-pink-500 font-bold text-center rounded-xl transition-all text-sm">
+          <i class="fa-regular fa-heart mr-2" id="wishlistIcon"></i><span id="wishlistTxt">Simpan ke Wishlist</span>
+        </button>
+
         {% if product.demo_url %}
         <a href="{{ product.demo_url }}" target="_blank"
           class="block w-full py-3 border border-slate-200 text-slate-600 hover:border-blue-400 hover:text-blue-600 font-bold text-center rounded-xl transition-all text-sm">
@@ -126,5 +132,184 @@
     </div>
   </section>
   {% endif %}
+
+  <!-- Reviews Section -->
+  <section class="mt-12" id="reviewSection">
+    <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
+      <h2 class="text-xl font-extrabold text-slate-800">Ulasan Pembeli</h2>
+      <button onclick="document.getElementById('reviewFormBox').classList.toggle('hidden')"
+        class="text-sm px-4 py-2 bg-blue-50 border border-blue-200 text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition-all">
+        <i class="fa-solid fa-pen mr-1.5"></i>Tulis Ulasan
+      </button>
+    </div>
+
+    <!-- Review Form -->
+    <div id="reviewFormBox" class="hidden bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-6 space-y-4">
+      <h3 class="font-bold text-slate-700 text-sm">Tulis Ulasan Kamu</h3>
+      <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">No. Pesanan (wajib)</label>
+        <input id="revOrder" type="text" placeholder="SCxxxxxxxxx" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-mono outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+        <p class="text-xs text-slate-400 mt-1">Hanya pembeli yang sudah dikonfirmasi bisa review</p>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-2">Rating</label>
+        <div class="flex gap-1" id="starPicker">
+          {% for i in range(1,6) %}
+          <i class="fa-regular fa-star text-2xl text-slate-300 cursor-pointer hover:text-yellow-400 transition-colors star-btn" data-v="{{ i }}" onclick="setRating({{ i }})"></i>
+          {% endfor %}
+        </div>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Nama</label>
+        <input id="revName" type="text" placeholder="Nama kamu" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Komentar</label>
+        <textarea id="revComment" rows="3" placeholder="Bagaimana pengalaman kamu dengan produk ini?" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-none"></textarea>
+      </div>
+      <button onclick="submitReview()" id="reviewBtn"
+        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-all">
+        <i class="fa-solid fa-paper-plane mr-1.5"></i>Kirim Ulasan
+      </button>
+    </div>
+
+    <!-- Review Stats -->
+    <div id="reviewStats" class="hidden bg-white rounded-2xl border border-slate-200 p-5 shadow-sm mb-4">
+      <div class="flex items-center gap-4">
+        <div class="text-center">
+          <div class="text-4xl font-black text-yellow-500" id="avgRating">-</div>
+          <div class="flex gap-0.5 justify-center mt-1" id="avgStars"></div>
+          <div class="text-xs text-slate-400 mt-1" id="totalReviews">0 ulasan</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review List -->
+    <div id="reviewList" class="space-y-3">
+      <div class="text-center py-8 text-slate-400 text-sm" id="reviewEmpty">
+        <i class="fa-regular fa-star text-3xl block mb-2 text-slate-300"></i>Belum ada ulasan
+      </div>
+    </div>
+  </section>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PRODUCT_ID = {{ product.id }};
+let selectedRating = 5;
+
+// ── WISHLIST ───────────────────────────────────────────────
+function getWishlist() {
+  try { return JSON.parse(localStorage.getItem('srcmarket_wishlist') || '[]'); } catch { return []; }
+}
+function saveWishlist(list) { localStorage.setItem('srcmarket_wishlist', JSON.stringify(list)); }
+
+function toggleWishlist(id, title, slug) {
+  let list = getWishlist();
+  const idx = list.findIndex(i => i.id === id);
+  if (idx >= 0) {
+    list.splice(idx, 1);
+    updateWishlistBtn(false);
+    showToast('Dihapus dari wishlist');
+  } else {
+    list.push({ id, title, slug });
+    updateWishlistBtn(true);
+    showToast('Ditambahkan ke wishlist ❤️');
+  }
+  saveWishlist(list);
+}
+
+function updateWishlistBtn(active) {
+  const icon = document.getElementById('wishlistIcon');
+  const txt  = document.getElementById('wishlistTxt');
+  if (active) {
+    icon.className = 'fa-solid fa-heart mr-2 text-pink-500';
+    txt.textContent = 'Tersimpan di Wishlist';
+    document.getElementById('wishlistBtn').className = 'block w-full py-3 border border-pink-300 bg-pink-50 text-pink-600 font-bold text-center rounded-xl transition-all text-sm';
+  } else {
+    icon.className = 'fa-regular fa-heart mr-2';
+    txt.textContent = 'Simpan ke Wishlist';
+    document.getElementById('wishlistBtn').className = 'block w-full py-3 border border-slate-200 text-slate-500 hover:border-pink-400 hover:text-pink-500 font-bold text-center rounded-xl transition-all text-sm';
+  }
+}
+
+// Init wishlist state on load
+(function() {
+  const inList = getWishlist().some(i => i.id === PRODUCT_ID);
+  updateWishlistBtn(inList);
+})();
+
+// ── REVIEW ────────────────────────────────────────────────
+function setRating(v) {
+  selectedRating = v;
+  document.querySelectorAll('.star-btn').forEach(s => {
+    const sv = parseInt(s.dataset.v);
+    s.className = sv <= v
+      ? 'fa-solid fa-star text-2xl text-yellow-400 cursor-pointer star-btn'
+      : 'fa-regular fa-star text-2xl text-slate-300 cursor-pointer hover:text-yellow-400 transition-colors star-btn';
+  });
+}
+setRating(5);
+
+async function submitReview() {
+  const orderNum = document.getElementById('revOrder').value.trim();
+  const name     = document.getElementById('revName').value.trim() || 'Anonim';
+  const comment  = document.getElementById('revComment').value.trim();
+  if (!orderNum) { showToast('Masukkan nomor pesanan', 'warn'); return; }
+  const btn = document.getElementById('reviewBtn');
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Mengirim...';
+  const res = await apiFetch('/api/review/submit', {
+    method: 'POST',
+    body: JSON.stringify({ order_number: orderNum, rating: selectedRating, comment, reviewer: name })
+  });
+  btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-1.5"></i>Kirim Ulasan';
+  if (res.ok) {
+    showToast(res.message || 'Ulasan terkirim!');
+    document.getElementById('reviewFormBox').classList.add('hidden');
+    document.getElementById('revOrder').value = '';
+    document.getElementById('revComment').value = '';
+  } else {
+    showToast(res.error || 'Gagal mengirim ulasan', 'error');
+  }
+}
+
+// Load reviews
+async function loadReviews() {
+  const res = await apiFetch(`/api/review/product/${PRODUCT_ID}`);
+  if (!res.ok || !res.reviews) return;
+  const list = res.reviews;
+  const empty = document.getElementById('reviewEmpty');
+  const stats = document.getElementById('reviewStats');
+  const container = document.getElementById('reviewList');
+
+  if (list.length === 0) { empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  stats.classList.remove('hidden');
+  document.getElementById('avgRating').textContent = res.avg;
+  document.getElementById('totalReviews').textContent = `${res.total} ulasan`;
+  const starsHtml = Array.from({length:5},(_,i)=>
+    `<i class="fa-${i < Math.round(res.avg) ? 'solid' : 'regular'} fa-star text-yellow-400 text-sm"></i>`
+  ).join('');
+  document.getElementById('avgStars').innerHTML = starsHtml;
+
+  container.innerHTML = list.map(r => `
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <p class="font-bold text-slate-800 text-sm">${r.reviewer}</p>
+          <div class="flex gap-0.5 mt-0.5">
+            ${Array.from({length:5},(_,i)=>
+              `<i class="fa-${i<r.rating?'solid':'regular'} fa-star text-yellow-400 text-xs"></i>`
+            ).join('')}
+          </div>
+        </div>
+        <span class="text-xs text-slate-400">${new Date(r.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</span>
+      </div>
+      ${r.comment ? `<p class="text-slate-600 text-sm mt-2 leading-relaxed">${r.comment}</p>` : ''}
+    </div>
+  `).join('');
+}
+loadReviews();
+</script>
 {% endblock %}

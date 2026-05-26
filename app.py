@@ -473,6 +473,7 @@ def admin_products():
     products_raw = (
         sb.table('products')
         .select('*, categories(name)')
+        .eq('active', True)
         .order('created_at', desc=True)
         .execute().data
     )

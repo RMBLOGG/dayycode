@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}FAQ — {{ cfg.site_name }}{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-12">
+  <h1 class="text-2xl font-extrabold text-slate-800 mb-2">FAQ</h1>
+  <p class="text-slate-500 mb-8">Pertanyaan yang sering ditanyakan</p>
+
+  <div class="space-y-4">
+    {% set faqs = [
+      ("Apa itu Dayy Code?", "Dayy Code adalah platform jual beli source code website dan aplikasi berkualitas dengan harga terjangkau. Semua produk siap pakai dan dilengkapi dokumentasi."),
+      ("Bagaimana cara membeli?", "Pilih produk yang kamu inginkan, klik tombol Beli Sekarang, isi data diri, lalu lakukan pembayaran. Setelah pembayaran dikonfirmasi, kamu akan mendapatkan link download otomatis."),
+      ("Metode pembayaran apa yang tersedia?", "Kami menerima pembayaran via DANA, OVO, dan GoPay ke nomor 082320781747 a.n. Ramdan Hidayah."),
+      ("Berapa lama konfirmasi pembayaran?", "Konfirmasi dilakukan secara manual. Biasanya dalam waktu 1–24 jam setelah bukti transfer diterima. Untuk konfirmasi lebih cepat, hubungi kami via WhatsApp."),
+      ("Apakah ada garansi produk?", "Ya, kami memberikan garansi bahwa produk yang dijual sesuai dengan deskripsi. Jika ada kendala teknis terkait produk, silakan hubungi kami via WhatsApp."),
+      ("Berapa kali saya bisa download file?", "Link download berlaku untuk beberapa kali unduhan dengan batas waktu tertentu setelah dikonfirmasi. Jika link sudah habis, hubungi kami untuk perpanjangan."),
+      ("Apakah source code bisa dikustomisasi?", "Ya, semua source code yang kami jual bisa dikustomisasi sesuai kebutuhan kamu. Tidak ada pembatasan penggunaan."),
+      ("Apakah ada refund?", "Karena produk berupa file digital, kami tidak menerima refund setelah file berhasil didownload. Pastikan kamu membaca deskripsi produk sebelum membeli."),
+      ("Bagaimana jika ada pertanyaan teknis?", "Kamu bisa menghubungi kami via WhatsApp di nomor 082320781747. Kami siap membantu seputar instalasi dan penggunaan produk."),
+    ] %}
+    {% for q, a in faqs %}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <button onclick="toggleFaq(this)" class="w-full flex items-center justify-between p-5 text-left font-bold text-slate-800 hover:text-blue-600 transition-colors">
+        <span>{{ q }}</span>
+        <i class="fa-solid fa-chevron-down text-slate-400 text-sm flex-shrink-0 ml-3 transition-transform duration-200"></i>
+      </button>
+      <div class="faq-body hidden px-5 pb-5">
+        <p class="text-slate-500 text-sm leading-relaxed">{{ a }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="mt-10 bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center">
+    <p class="text-slate-600 text-sm mb-3">Masih ada pertanyaan? Hubungi kami langsung</p>
+    <a href="https://wa.me/{{ cfg.contact_wa }}" target="_blank"
+      class="inline-flex items-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl text-sm transition-all">
+      <i class="fa-brands fa-whatsapp"></i> Chat WhatsApp
+    </a>
+  </div>
+</div>
+
+<script>
+function toggleFaq(btn) {
+  const body = btn.nextElementSibling;
+  const icon = btn.querySelector('i');
+  body.classList.toggle('hidden');
+  icon.style.transform = body.classList.contains('hidden') ? '' : 'rotate(180deg)';
+}
+</script>
+{% endblock %}

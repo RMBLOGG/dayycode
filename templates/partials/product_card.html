@@ -1,17 +1,19 @@
 <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all group">
   <a href="/product/{{ p.slug }}" class="block relative">
-    <div class="aspect-video bg-slate-100 flex items-center justify-center overflow-hidden">
-      {% set screenshots = parse_json(p.screenshots) if p.screenshots else [] %}
-      {% set thumb = p.thumbnail if p.thumbnail else (screenshots[0] if screenshots else '') %}
-      {% if thumb %}
-        <img src="{{ thumb }}" alt="{{ p.title }}" class="w-full h-full object-contain p-1">
-      {% else %}
-        <div class="text-center p-4">
-          <i class="fa-solid fa-code text-4xl text-blue-200 mb-2 block"></i>
-          <span class="text-xs text-slate-400 font-mono">{{ p.tech_stack[:25] if p.tech_stack else 'Source Code' }}</span>
-        </div>
-      {% endif %}
+    {% set screenshots = parse_json(p.screenshots) if p.screenshots else [] %}
+    {% set thumb = p.thumbnail if p.thumbnail else (screenshots[0] if screenshots else '') %}
+    {% if thumb %}
+    <div class="aspect-video bg-slate-100 overflow-hidden">
+      <img src="{{ thumb }}" alt="{{ p.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
     </div>
+    {% else %}
+    <div class="aspect-video bg-slate-100 flex items-center justify-center">
+      <div class="text-center p-4">
+        <i class="fa-solid fa-code text-4xl text-blue-200 mb-2 block"></i>
+        <span class="text-xs text-slate-400 font-mono">{{ p.tech_stack[:25] if p.tech_stack else 'Source Code' }}</span>
+      </div>
+    </div>
+    {% endif %}
     {% if p.original_price and p.original_price > p.price %}
     <span class="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-extrabold px-2 py-1 rounded-full">
       -{{ ((1 - p.price/p.original_price)*100)|int }}%

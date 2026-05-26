@@ -12,7 +12,7 @@
         {% set thumb = product.thumbnail if product.thumbnail else (ss_list[0] if ss_list else '') %}
         <div class="w-14 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border border-blue-100">
           {% if thumb %}
-          <img src="{{ thumb }}" class="w-full h-full object-cover rounded-xl" alt="{{ product.title }}">
+          <img src="{{ thumb }}" class="w-full h-full object-contain rounded-xl" alt="{{ product.title }}">
           {% else %}
           <i class="fa-solid fa-code text-blue-600 text-xl"></i>
           {% endif %}

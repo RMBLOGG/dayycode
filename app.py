@@ -80,20 +80,25 @@ def index():
         row['cat_name'] = (row.pop('categories') or {}).get('name', '')
         featured.append(row)
 
-    # Latest products
+    # Latest products - exclude yang sudah ada di featured
+    featured_ids = {p['id'] for p in featured}
     latest_raw = (
         sb.table('products')
         .select('*, categories(name)')
         .eq('active', True)
         .order('created_at', desc=True)
-        .limit(8)
+        .limit(12)
         .execute().data
     )
     latest = []
     for p in latest_raw:
+        if p['id'] in featured_ids:
+            continue
         row = dict(p)
         row['cat_name'] = (row.pop('categories') or {}).get('name', '')
         latest.append(row)
+        if len(latest) >= 8:
+            break
 
     # Stats
     all_active = sb.table('products').select('sales').eq('active', True).execute().data
@@ -119,9 +124,9 @@ def products_page():
 
     if cat_slug:
         # resolve category id first
-        cat_row = sb.table('categories').select('id').eq('slug', cat_slug).single().execute().data
-        if cat_row:
-            q = q.eq('category_id', cat_row['id'])
+        cat_rows = sb.table('categories').select('id').eq('slug', cat_slug).limit(1).execute().data
+        if cat_rows:
+            q = q.eq('category_id', cat_rows[0]['id'])
 
     if search:
         # PostgREST OR filter
@@ -156,16 +161,17 @@ def products_page():
 @app.route('/product/<slug>')
 def product_detail(slug):
     sb  = get_supabase()
-    raw = (
+    rows = (
         sb.table('products')
         .select('*, categories(name, slug)')
         .eq('slug', slug)
         .eq('active', True)
-        .single()
+        .limit(1)
         .execute().data
     )
-    if not raw:
+    if not rows:
         abort(404)
+    raw = rows[0]
 
     product = dict(raw)
     cat_info = product.pop('categories') or {}
@@ -195,10 +201,10 @@ def product_detail(slug):
 @app.route('/buy/<slug>', methods=['GET', 'POST'])
 def buy(slug):
     sb  = get_supabase()
-    raw = sb.table('products').select('*').eq('slug', slug).eq('active', True).single().execute().data
-    if not raw:
+    rows = sb.table('products').select('*').eq('slug', slug).eq('active', True).limit(1).execute().data
+    if not rows:
         abort(404)
-    product = dict(raw)
+    product = dict(rows[0])
 
     if request.method == 'POST':
         data  = request.json
@@ -227,18 +233,19 @@ def buy(slug):
 @app.route('/order/<order_number>')
 def order_page(order_number):
     sb  = get_supabase()
-    raw = sb.table('orders').select('*').eq('order_number', order_number).single().execute().data
-    if not raw:
+    rows = sb.table('orders').select('*').eq('order_number', order_number).limit(1).execute().data
+    if not rows:
         abort(404)
-    return render_template('order_page.html', order=dict(raw))
+    return render_template('order_page.html', order=dict(rows[0]))
 
 
 @app.route('/api/upload-proof/<order_number>', methods=['POST'])
 def upload_proof(order_number):
     sb  = get_supabase()
-    raw = sb.table('orders').select('*').eq('order_number', order_number).single().execute().data
-    if not raw:
+    rows = sb.table('orders').select('*').eq('order_number', order_number).limit(1).execute().data
+    if not rows:
         return jsonify({'error': 'Order tidak ditemukan'}), 404
+    raw = rows[0]
     if raw['status'] not in ('pending',):
         return jsonify({'error': 'Order sudah diproses'}), 400
 
@@ -273,10 +280,10 @@ def upload_proof(order_number):
 @app.route('/download/<token>')
 def download_file(token):
     sb  = get_supabase()
-    raw = sb.table('orders').select('*').eq('download_token', token).single().execute().data
-    if not raw:
+    rows = sb.table('orders').select('*').eq('download_token', token).limit(1).execute().data
+    if not rows:
         abort(404)
-    order = dict(raw)
+    order = dict(rows[0])
 
     # Check expiry
     if order.get('download_expires'):
@@ -291,10 +298,10 @@ def download_file(token):
         return render_template('download_expired.html'), 410
 
     # Get product
-    prod_raw = sb.table('products').select('*').eq('id', order['product_id']).single().execute().data
-    if not prod_raw:
+    prod_rows = sb.table('products').select('*').eq('id', order['product_id']).limit(1).execute().data
+    if not prod_rows:
         abort(404)
-    product = dict(prod_raw)
+    product = dict(prod_rows[0])
 
     # Increment counters
     sb.table('orders').update({'download_count': (order.get('download_count') or 0) + 1}).eq('id', order['id']).execute()
@@ -317,9 +324,9 @@ def track():
     order = None
     if order_number:
         sb  = get_supabase()
-        raw = sb.table('orders').select('*').eq('order_number', order_number).single().execute().data
-        if raw:
-            order = dict(raw)
+        rows = sb.table('orders').select('*').eq('order_number', order_number).limit(1).execute().data
+        if rows:
+            order = dict(rows[0])
     return render_template('track.html', order=order, order_number=order_number)
 
 
@@ -426,15 +433,15 @@ def admin_orders():
 @admin_required
 def admin_order_detail(oid):
     sb  = get_supabase()
-    raw = sb.table('orders').select('*').eq('id', oid).single().execute().data
-    if not raw:
+    rows = sb.table('orders').select('*').eq('id', oid).limit(1).execute().data
+    if not rows:
         abort(404)
-    order   = dict(raw)
+    order   = dict(rows[0])
     product = None
     if order.get('product_id'):
-        p = sb.table('products').select('*').eq('id', order['product_id']).single().execute().data
+        p = sb.table('products').select('*').eq('id', order['product_id']).limit(1).execute().data
         if p:
-            product = dict(p)
+            product = dict(p[0])
     return render_template('admin/order_detail.html', order=order, product=product)
 
 
@@ -474,9 +481,10 @@ def api_approve_order(oid):
     expires = (datetime.now() + timedelta(hours=hours)).isoformat()
 
     sb  = get_supabase()
-    raw = sb.table('orders').select('*').eq('id', oid).single().execute().data
-    if not raw:
+    rows = sb.table('orders').select('*').eq('id', oid).limit(1).execute().data
+    if not rows:
         return jsonify({'error': 'Not found'}), 404
+    raw = rows[0]
 
     sb.table('orders').update({
         'status':           'approved',
@@ -485,9 +493,9 @@ def api_approve_order(oid):
         'updated_at':       datetime.now().isoformat(),
     }).eq('id', oid).execute()
 
-    sb.table('products').update({
-        'sales': (sb.table('products').select('sales').eq('id', raw['product_id']).single().execute().data or {}).get('sales', 0) + 1
-    }).eq('id', raw['product_id']).execute()
+    cur_sales_rows = sb.table('products').select('sales').eq('id', raw['product_id']).limit(1).execute().data
+    cur_sales = (cur_sales_rows[0].get('sales', 0) if cur_sales_rows else 0) or 0
+    sb.table('products').update({'sales': cur_sales + 1}).eq('id', raw['product_id']).execute()
 
     download_url = url_for('download_file', token=token, _external=True)
     return jsonify({'ok': True, 'download_url': download_url, 'token': token})
@@ -630,8 +638,8 @@ def api_upload_screenshot(pid):
         return jsonify({'error': f'Upload gagal: {str(e)}'}), 500
 
     sb  = get_supabase()
-    raw = sb.table('products').select('screenshots').eq('id', pid).single().execute().data
-    screenshots = parse_json((raw or {}).get('screenshots', '[]'))
+    raw_rows = sb.table('products').select('screenshots').eq('id', pid).limit(1).execute().data
+    screenshots = parse_json(((raw_rows[0] if raw_rows else None) or {}).get('screenshots', '[]'))
     screenshots.append(url)
     sb.table('products').update({'screenshots': json.dumps(screenshots)}).eq('id', pid).execute()
     return jsonify({'ok': True, 'url': url})

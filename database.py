@@ -17,10 +17,15 @@ def hash_pw(pw: str) -> str:
     return hashlib.sha256(pw.encode()).hexdigest()
 
 def slugify(text: str) -> str:
+    import unicodedata
+    # Normalize unicode (e.g. mathematical bold chars) ke ASCII dulu
+    text = unicodedata.normalize('NFKD', text)
+    text = text.encode('ascii', 'ignore').decode('ascii')
     text = text.lower().strip()
     text = re.sub(r'[^\w\s-]', '', text)
     text = re.sub(r'[\s_-]+', '-', text)
-    return text
+    text = text.strip('-')
+    return text or 'product'
 
 # ── Settings helpers ───────────────────────────────────────
 def get_settings() -> dict:

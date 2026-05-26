@@ -92,12 +92,26 @@
       <i class="fa-solid fa-gear text-base"></i>
       <span class="text-[10px] font-semibold">Pengaturan</span>
     </a>
-    <a href="/admin/logout" class="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-slate-400 hover:text-red-400 transition-colors">
-      <i class="fa-solid fa-right-from-bracket text-base"></i>
-      <span class="text-[10px] font-semibold">Logout</span>
-    </a>
+    <!-- More menu -->
+    <button onclick="toggleMoreMenu()" class="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-slate-400 hover:text-white transition-colors">
+      <i class="fa-solid fa-ellipsis text-base"></i>
+      <span class="text-[10px] font-semibold">Lainnya</span>
+    </button>
   </div>
 </nav>
+
+<!-- More Popup Menu -->
+<div id="moreMenu" class="hidden lg:hidden fixed bottom-16 right-2 z-50 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl overflow-hidden w-44">
+  <a href="/admin/vouchers" class="flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white hover:bg-white/10 transition-colors text-sm font-medium {% block nav_vouchers_m %}{% endblock %}">
+    <i class="fa-solid fa-ticket w-4 text-center"></i> Voucher
+  </a>
+  <a href="/admin/reviews" class="flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white hover:bg-white/10 transition-colors text-sm font-medium border-t border-white/5 {% block nav_reviews_m %}{% endblock %}">
+    <i class="fa-solid fa-star w-4 text-center"></i> Ulasan
+  </a>
+  <a href="/admin/logout" class="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-white/10 transition-colors text-sm font-medium border-t border-white/5">
+    <i class="fa-solid fa-right-from-bracket w-4 text-center"></i> Logout
+  </a>
+</div>
 
 <main class="lg:ml-56 min-h-screen bg-slate-50 pb-20 lg:pb-0">{% block content %}{% endblock %}</main>
 
@@ -113,6 +127,16 @@ function showToast(msg,type='success'){
 }
 async function api(url,opts={}){const res=await fetch(url,{headers:{'Content-Type':'application/json'},...opts});return res.json();}
 function fmt(n){return'Rp '+Number(n||0).toLocaleString('id-ID');}
+function toggleMoreMenu(){
+  const m=document.getElementById('moreMenu');
+  m.classList.toggle('hidden');
+}
+document.addEventListener('click',function(e){
+  const menu=document.getElementById('moreMenu');
+  if(!menu.classList.contains('hidden') && !e.target.closest('#moreMenu') && !e.target.closest('button[onclick="toggleMoreMenu()"]')){
+    menu.classList.add('hidden');
+  }
+});
 </script>
 {% block scripts %}{% endblock %}
 </body>

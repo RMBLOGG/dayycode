@@ -1,0 +1,126 @@
+{% extends "admin/base.html" %}
+{% block title %}Voucher{% endblock %}
+{% block content %}
+<div class="p-4 lg:p-6 space-y-5">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <h1 class="text-xl font-extrabold text-slate-800">Voucher / Diskon</h1>
+    <button onclick="openAdd()" class="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-sm transition-all active:scale-95">
+      <i class="fa-solid fa-plus"></i> Buat Voucher
+    </button>
+  </div>
+
+  <div class="space-y-3">
+    {% for v in vouchers %}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 {{ 'opacity-50' if not v.active }}">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-mono font-black text-lg text-blue-600 tracking-widest">{{ v.code }}</span>
+            {% if not v.active %}<span class="text-xs px-2 py-0.5 bg-red-50 text-red-500 border border-red-200 rounded-full font-bold">Nonaktif</span>{% endif %}
+          </div>
+          <p class="text-sm text-slate-500 mt-0.5">
+            {% if v.discount_pct %}Diskon {{ v.discount_pct }}%{% else %}Diskon {{ fmt_rp(v.discount_fix) }}{% endif %}
+            {% if v.min_price %} · Min {{ fmt_rp(v.min_price) }}{% endif %}
+            {% if v.max_uses %} · Maks {{ v.max_uses }}x pakai{% endif %}
+            · Dipakai {{ v.used_count }}x
+          </p>
+          {% if v.expires_at %}
+          <p class="text-xs text-slate-400 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>Exp: {{ v.expires_at[:10] }}</p>
+          {% endif %}
+        </div>
+        <div class="flex gap-2">
+          <button onclick="deleteVoucher({{ v.id }}, '{{ v.code }}')" class="py-2 px-3 bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-slate-400 hover:text-red-500 rounded-xl text-xs font-bold transition-all">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center py-16 text-slate-400 bg-white rounded-2xl border border-slate-200">
+      <i class="fa-solid fa-ticket text-4xl mb-3 block text-slate-300"></i>Belum ada voucher
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Add Modal -->
+<div id="vModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200">
+    <div class="flex items-center justify-between p-5 border-b border-slate-100 sticky top-0 bg-white">
+      <h2 class="font-extrabold text-slate-800">Buat Voucher</h2>
+      <button onclick="closeModal()" class="w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center text-slate-500 transition-colors"><i class="fa-solid fa-xmark text-xs"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div>
+        <label class="alx">Kode Voucher *</label>
+        <input id="fCode" type="text" placeholder="DISKON20" class="ainp uppercase font-mono font-bold" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="alx">Diskon Persen (%)</label>
+          <input id="fPct" type="number" min="0" max="100" placeholder="0" class="ainp font-mono">
+          <p class="text-xs text-slate-400 mt-1">Isi salah satu</p>
+        </div>
+        <div>
+          <label class="alx">Diskon Nominal (Rp)</label>
+          <input id="fFix" type="number" min="0" placeholder="0" class="ainp font-mono">
+          <p class="text-xs text-slate-400 mt-1">Prioritas: persen</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="alx">Min. Harga (Rp)</label>
+          <input id="fMin" type="number" min="0" placeholder="0" class="ainp font-mono">
+        </div>
+        <div>
+          <label class="alx">Maks. Pakai (0=∞)</label>
+          <input id="fMax" type="number" min="0" placeholder="0" class="ainp font-mono">
+        </div>
+      </div>
+      <div>
+        <label class="alx">Tanggal Kadaluarsa (opsional)</label>
+        <input id="fExp" type="datetime-local" class="ainp">
+      </div>
+      <div class="flex items-center gap-3">
+        <input id="fActive" type="checkbox" checked class="w-4 h-4 rounded accent-blue-600">
+        <label class="text-sm text-slate-600 font-medium">Aktif</label>
+      </div>
+      <button onclick="saveVoucher()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all">
+        <i class="fa-solid fa-save mr-2"></i>Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openAdd() { document.getElementById('vModal').classList.remove('hidden'); }
+function closeModal() { document.getElementById('vModal').classList.add('hidden'); }
+
+async function saveVoucher() {
+  const code = document.getElementById('fCode').value.trim();
+  if (!code) { showToast('Kode wajib diisi', 'error'); return; }
+  const payload = {
+    code,
+    discount_pct: parseInt(document.getElementById('fPct').value) || 0,
+    discount_fix: parseInt(document.getElementById('fFix').value) || 0,
+    min_price:    parseInt(document.getElementById('fMin').value) || 0,
+    max_uses:     parseInt(document.getElementById('fMax').value) || 0,
+    active:       document.getElementById('fActive').checked,
+    expires_at:   document.getElementById('fExp').value || null,
+  };
+  const res = await apiFetch('/api/admin/vouchers', { method: 'POST', body: JSON.stringify(payload) });
+  if (res.ok) { showToast('Voucher dibuat!'); setTimeout(() => location.reload(), 800); }
+  else showToast(res.error || 'Gagal', 'error');
+}
+
+async function deleteVoucher(id, code) {
+  if (!confirm(`Hapus voucher ${code}?`)) return;
+  const res = await apiFetch(`/api/admin/vouchers/${id}`, { method: 'DELETE' });
+  if (res.ok) { showToast('Dihapus'); setTimeout(() => location.reload(), 600); }
+  else showToast('Gagal', 'error');
+}
+</script>
+{% endblock %}

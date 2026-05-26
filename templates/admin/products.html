@@ -11,9 +11,15 @@
     </button>
   </div>
 
-  <div class="space-y-3">
+  <!-- Search -->
+  <div class="relative">
+    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+    <input type="text" id="searchProd" placeholder="Cari produk..." oninput="filterProducts()" class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-400 transition-all">
+  </div>
+
+  <div id="prodList" class="space-y-3">
     {% for p in products %}
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 hover:border-blue-200 hover:shadow-md transition-all {{ 'opacity-50' if not p.active }}">
+    <div class="prod-card bg-white rounded-2xl border border-slate-200 shadow-sm p-4 hover:border-blue-200 hover:shadow-md transition-all {{ 'opacity-50' if not p.active }}" data-title="{{ p.title|lower }}" data-cat="{{ p.cat_name|lower }}" data-tech="{{ p.tech_stack|lower }}">
       <div class="flex items-start gap-4">
         <div class="w-16 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border border-blue-100">
           {% if p.thumbnail %}
@@ -69,6 +75,10 @@
       Belum ada produk
     </div>
     {% endfor %}
+    <div id="emptySearch" style="display:none" class="text-center py-16 text-slate-400 bg-white rounded-2xl border border-slate-200 shadow-sm">
+      <i class="fa-solid fa-magnifying-glass text-4xl mb-3 block text-slate-300"></i>
+      Produk tidak ditemukan
+    </div>
   </div>
 </div>
 
@@ -361,6 +371,18 @@ async function doUploadSS() {
   const data = await res.json();
   if (data.ok) { showToast('Screenshot berhasil diupload!'); closeSSModal(); }
   else showToast(data.error || 'Gagal!', 'error');
+}
+function filterProducts() {
+  const q = document.getElementById('searchProd').value.toLowerCase().trim();
+  const cards = document.querySelectorAll('.prod-card');
+  let visible = 0;
+  cards.forEach(card => {
+    const match = !q || card.dataset.title.includes(q) || card.dataset.cat.includes(q) || card.dataset.tech.includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  const empty = document.getElementById('emptySearch');
+  if (empty) empty.style.display = visible === 0 ? '' : 'none';
 }
 </script>
 <style>

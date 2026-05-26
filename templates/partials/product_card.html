@@ -70,8 +70,8 @@
 
     <!-- Actions -->
     <div class="flex items-center gap-1.5">
-      <a href="/buy/{{ p.slug }}" class="flex-1 text-center py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all active:scale-95">
-        Beli Sekarang
+      <a href="/product/{{ p.slug }}" class="flex-1 text-center py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all active:scale-95">
+        Detail Produk
       </a>
       <button
         onclick="event.preventDefault(); cardToggleWishlist({{ p.id }}, '{{ p.title|replace("'","") }}', '{{ p.slug }}')"

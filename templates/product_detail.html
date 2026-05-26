@@ -15,7 +15,7 @@
   {% set ss_list = product.screenshots_list if product.screenshots_list else [] %}
   {% set thumb = product.thumbnail if product.thumbnail else (ss_list[0] if ss_list else '') %}
   {% if thumb or ss_list %}
-  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+  <div class="-mx-4 mb-8 shadow-sm border-y border-slate-200 bg-white overflow-hidden">
     <img src="{{ thumb }}" alt="{{ product.title }}" class="w-full h-auto block" id="mainImg">
     {% if ss_list|length > 1 %}
     <div class="flex gap-2 p-3 overflow-x-auto">

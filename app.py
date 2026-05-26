@@ -869,3 +869,20 @@ def api_delete_review(rid):
 
 # Update route buy agar support voucher — override dengan patch di JS
 # (buy POST sudah simpan voucher_code & discount_amount, lihat template buy.html)
+
+# ── WISHLIST PAGE ──────────────────────────────────────────
+@app.route('/wishlist')
+def wishlist_page():
+    return render_template('wishlist.html')
+
+@app.route('/api/wishlist/product/<int:pid>')
+def api_wishlist_product(pid):
+    sb = get_supabase()
+    rows = sb.table('products').select('*, categories(name)').eq('id', pid).eq('active', True).limit(1).execute().data
+    if not rows:
+        return jsonify({'ok': False}), 404
+    raw = rows[0]
+    p   = dict(raw)
+    p['cat_name']        = (p.pop('categories') or {}).get('name', '')
+    p['screenshots_list'] = parse_json(p.get('screenshots', '[]'))
+    return jsonify({'ok': True, 'product': p})

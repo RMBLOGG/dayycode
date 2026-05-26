@@ -15,10 +15,8 @@
   {% set ss_list = product.screenshots_list if product.screenshots_list else [] %}
   {% set thumb = product.thumbnail if product.thumbnail else (ss_list[0] if ss_list else '') %}
   {% if thumb or ss_list %}
-  <div class="-mx-4 mb-8 shadow-sm border-y border-slate-200 bg-slate-900 overflow-hidden">
-    <div class="aspect-video">
-      <img src="{{ thumb }}" alt="{{ product.title }}" class="w-full h-full object-contain" id="mainImg">
-    </div>
+  <div class="-mx-4 mb-8 border-y border-slate-200">
+    <img src="{{ thumb }}" alt="{{ product.title }}" class="w-full h-auto block" id="mainImg">
     {% if ss_list|length > 1 %}
     <div class="flex gap-2 p-3 overflow-x-auto bg-white">
       {% for ss in ss_list %}

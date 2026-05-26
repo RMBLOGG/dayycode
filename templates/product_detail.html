@@ -192,13 +192,8 @@
     </div>
   </section>
 </div>
-{% endblock %}
 
-{% block scripts %}
-<script>
-const PRODUCT_ID = {{ product.id }};
-
-<!-- Sticky Bottom Bar -->
+<!-- Sticky Bottom Bar (mobile only) -->
 <div class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] lg:hidden">
   <div class="flex items-center gap-2 px-4 py-3">
     <div class="flex-1 min-w-0">
@@ -221,8 +216,6 @@ const PRODUCT_ID = {{ product.id }};
     </a>
   </div>
 </div>
-
-<!-- Spacer biar konten tidak ketutupan sticky bar di mobile -->
 <div class="h-20 lg:hidden"></div>
 
 {% endblock %}

@@ -11,33 +11,25 @@
     <span class="text-slate-600 font-medium">{{ product.title }}</span>
   </nav>
 
+  <!-- Screenshot - Full Width -->
+  {% set ss_list = product.screenshots_list if product.screenshots_list else [] %}
+  {% set thumb = product.thumbnail if product.thumbnail else (ss_list[0] if ss_list else '') %}
+  {% if thumb or ss_list %}
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+    <img src="{{ thumb }}" alt="{{ product.title }}" class="w-full h-auto block" id="mainImg">
+    {% if ss_list|length > 1 %}
+    <div class="flex gap-2 p-3 overflow-x-auto">
+      {% for ss in ss_list %}
+      <img src="{{ ss }}" onclick="document.getElementById('mainImg').src='{{ ss }}'"
+        class="w-20 h-14 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all flex-shrink-0">
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     <div class="lg:col-span-2 space-y-5">
-      <!-- Screenshot -->
-      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        {% set ss_list = product.screenshots_list if product.screenshots_list else [] %}
-        {% set thumb = product.thumbnail if product.thumbnail else (ss_list[0] if ss_list else '') %}
-        {% if thumb or ss_list %}
-        <div class="bg-slate-50">
-          <img src="{{ thumb }}" alt="{{ product.title }}" class="w-full h-auto block" id="mainImg">
-        </div>
-        {% if ss_list|length > 1 %}
-        <div class="flex gap-2 p-3 overflow-x-auto">
-          {% for ss in product.screenshots_list %}
-          <img src="{{ ss }}" onclick="document.getElementById('mainImg').src='{{ ss }}'"
-            class="w-20 h-14 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all flex-shrink-0">
-          {% endfor %}
-        </div>
-        {% endif %}
-        {% else %}
-        <div class="aspect-video flex items-center justify-center bg-slate-100">
-          <div class="text-center">
-            <i class="fa-solid fa-code text-6xl text-slate-300 mb-3 block"></i>
-            <p class="text-slate-400 text-sm font-mono">{{ product.tech_stack }}</p>
-          </div>
-        </div>
-        {% endif %}
-      </div>
 
       <!-- Description -->
       <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">

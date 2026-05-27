@@ -300,39 +300,48 @@ def upload_proof(order_number):
 
 @app.route('/download/<token>')
 def download_file(token):
-    sb  = get_supabase()
-    rows = sb.table('orders').select('*').eq('download_token', token).limit(1).execute().data
-    if not rows:
-        abort(404)
-    order = dict(rows[0])
+    try:
+        from datetime import timezone
+        sb  = get_supabase()
+        rows = sb.table('orders').select('*').eq('download_token', token).limit(1).execute().data
+        if not rows:
+            abort(404)
+        order = dict(rows[0])
 
-    # Check expiry
-    if order.get('download_expires'):
-        exp = datetime.fromisoformat(order['download_expires'])
-        if datetime.now() > exp:
+        # Check expiry — handle timezone-aware vs naive
+        if order.get('download_expires'):
+            exp_str = order['download_expires'].replace('Z', '+00:00')
+            exp = datetime.fromisoformat(exp_str)
+            now = datetime.now(timezone.utc)
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if now > exp:
+                return render_template('download_expired.html'), 410
+
+        # Check max downloads
+        cfg    = get_settings()
+        max_dl = int(cfg.get('max_download', 3))
+        if (order.get('download_count') or 0) >= max_dl:
             return render_template('download_expired.html'), 410
 
-    # Check max downloads
-    cfg    = get_settings()
-    max_dl = int(cfg.get('max_download', 3))
-    if (order.get('download_count') or 0) >= max_dl:
-        return render_template('download_expired.html'), 410
+        # Get product
+        prod_rows = sb.table('products').select('*').eq('id', order['product_id']).limit(1).execute().data
+        if not prod_rows:
+            abort(404)
+        product = dict(prod_rows[0])
 
-    # Get product
-    prod_rows = sb.table('products').select('*').eq('id', order['product_id']).limit(1).execute().data
-    if not prod_rows:
-        abort(404)
-    product = dict(prod_rows[0])
+        # Increment counters
+        sb.table('orders').update({'download_count': (order.get('download_count') or 0) + 1}).eq('id', order['id']).execute()
+        sb.table('products').update({'downloads': (product.get('downloads') or 0) + 1}).eq('id', product['id']).execute()
 
-    # Increment counters
-    sb.table('orders').update({'download_count': (order.get('download_count') or 0) + 1}).eq('id', order['id']).execute()
-    sb.table('products').update({'downloads': (product.get('downloads') or 0) + 1}).eq('id', product['id']).execute()
+        # Redirect ke file_url Cloudinary
+        if product.get('file_url'):
+            return redirect(product['file_url'])
 
-    # Redirect ke file_url Cloudinary
-    if product.get('file_url'):
-        return redirect(product['file_url'])
+        return "File tidak tersedia", 404
 
-    return "File tidak tersedia", 404
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 
 @app.route('/track')

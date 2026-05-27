@@ -328,22 +328,7 @@ def download_file(token):
     sb.table('orders').update({'download_count': (order.get('download_count') or 0) + 1}).eq('id', order['id']).execute()
     sb.table('products').update({'downloads': (product.get('downloads') or 0) + 1}).eq('id', product['id']).execute()
 
-    # Generate signed URL Cloudinary (expire 90 detik) — aman dari share link
-    if product.get('cloudinary_id'):
-        try:
-            import cloudinary.utils
-            signed_url, _ = cloudinary.utils.cloudinary_url(
-                product['cloudinary_id'],
-                resource_type='raw',
-                sign_url=True,
-                expires_at=int(__import__('time').time()) + 90,
-                attachment=True,
-            )
-            return redirect(signed_url)
-        except Exception as e:
-            return f'Gagal generate link: {str(e)}', 500
-
-    # Fallback: file_url langsung (produk lama sebelum update)
+    # Redirect ke file_url Cloudinary
     if product.get('file_url'):
         return redirect(product['file_url'])
 

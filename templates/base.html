@@ -30,7 +30,7 @@
   </style>
   {% block head %}{% endblock %}
 </head>
-<body class="font-sans antialiased bg-slate-50 text-slate-800">
+<body class="font-sans antialiased bg-slate-50 text-slate-800 overflow-x-hidden">
 
 <!-- ============ SIDEBAR ============ -->
 <!-- Overlay -->
@@ -173,7 +173,22 @@
           <div class="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center"><img src="/static/icon.png" class="w-full h-full object-contain"></div>
           <span class="font-extrabold text-white">Dayy Code</span>
         </div>
-        <p class="text-sm text-slate-400 leading-relaxed">{{ cfg.site_description }}</p>
+        <p class="text-sm text-slate-400 leading-relaxed mb-4">{{ cfg.site_description }}</p>
+        <!-- Social Links -->
+        <div class="flex items-center gap-2">
+          <a href="https://www.facebook.com/profile.php?id=61590162582037" target="_blank"
+             class="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+             style="background-color:#1877F2;"
+             title="Facebook Dayy Code">
+            <i class="fa-brands fa-facebook-f text-white text-sm"></i>
+          </a>
+          <a href="https://wa.me/{{ cfg.contact_wa }}" target="_blank"
+             class="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+             style="background-color:#25D366;"
+             title="WhatsApp">
+            <i class="fa-brands fa-whatsapp text-white text-sm"></i>
+          </a>
+        </div>
       </div>
       <!-- Navigasi -->
       <div>

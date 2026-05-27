@@ -328,13 +328,24 @@ def download_file(token):
     sb.table('orders').update({'download_count': (order.get('download_count') or 0) + 1}).eq('id', order['id']).execute()
     sb.table('products').update({'downloads': (product.get('downloads') or 0) + 1}).eq('id', product['id']).execute()
 
-    # Serve file — on Vercel filesystem is read-only/ephemeral, prefer file_url
+    # Generate signed URL Cloudinary (expire 90 detik) — aman dari share link
+    if product.get('cloudinary_id'):
+        try:
+            import cloudinary.utils
+            signed_url, _ = cloudinary.utils.cloudinary_url(
+                product['cloudinary_id'],
+                resource_type='raw',
+                sign_url=True,
+                expires_at=int(__import__('time').time()) + 90,
+                attachment=True,
+            )
+            return redirect(signed_url)
+        except Exception as e:
+            return f'Gagal generate link: {str(e)}', 500
+
+    # Fallback: file_url langsung (produk lama sebelum update)
     if product.get('file_url'):
         return redirect(product['file_url'])
-
-    file_path = os.path.join(UPLOAD_FOLDER, product['file_name']) if product.get('file_name') else None
-    if file_path and os.path.exists(file_path):
-        return send_file(file_path, as_attachment=True, download_name=product['file_name'])
 
     return "File tidak tersedia", 404
 
@@ -605,12 +616,29 @@ def api_upload_product_file(pid):
     file = request.files.get('file')
     if not file:
         return jsonify({'error': 'No file'}), 400
-    ext      = file.filename.rsplit('.', 1)[-1].lower()
-    filename = f"product_{pid}_{secrets.token_hex(6)}.{ext}"
-    file.save(os.path.join(UPLOAD_FOLDER, filename))
+    ext = file.filename.rsplit('.', 1)[-1].lower()
+    if ext not in ('zip', 'rar', '7z'):
+        return jsonify({'error': 'Format tidak didukung. Gunakan ZIP/RAR/7Z'}), 400
+    try:
+        result = cloudinary.uploader.upload(
+            file,
+            folder='srcmarket/files',
+            public_id=f'file_{pid}_{secrets.token_hex(6)}',
+            resource_type='raw',
+            overwrite=False,
+        )
+        file_url      = result['secure_url']
+        cloudinary_id = result['public_id']
+    except Exception as e:
+        return jsonify({'error': f'Upload gagal: {str(e)}'}), 500
+
     sb = get_supabase()
-    sb.table('products').update({'file_name': filename}).eq('id', pid).execute()
-    return jsonify({'ok': True, 'filename': filename})
+    sb.table('products').update({
+        'file_url':      file_url,
+        'cloudinary_id': cloudinary_id,
+        'file_name':     file.filename,
+    }).eq('id', pid).execute()
+    return jsonify({'ok': True, 'file_url': file_url})
 
 
 @app.route('/api/admin/products/<int:pid>/upload-thumbnail', methods=['POST'])

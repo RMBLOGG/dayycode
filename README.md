@@ -124,8 +124,8 @@ python app.py
 Buka `http://localhost:5000`
 
 Login admin default:
-- Username: `kalajengking`
-- Password: `Dayynime`
+- Username: `sesuai yang diset saat deploy`
+- Password: `sesuai yang diset saat deploy`
 
 > [![Warning](https://img.shields.io/badge/Penting-Ganti%20password%20admin%20setelah%20login%20pertama-orange?style=flat-square&logo=alerttriangle&logoColor=white)]()
 

@@ -1,8 +1,8 @@
 <div class="group bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-md transition-all duration-200 relative">
 
-  <!-- Inactive overlay -->
+  <!-- Inactive overlay — blocks all interaction -->
   {% if not p.active %}
-  <div class="absolute inset-0 z-20 bg-slate-900/60 backdrop-blur-[2px] rounded-xl flex flex-col items-center justify-center gap-2 pointer-events-none">
+  <div class="absolute inset-0 z-20 bg-slate-900/60 backdrop-blur-[2px] rounded-xl flex flex-col items-center justify-center gap-2 cursor-not-allowed" onclick="return false;" style="pointer-events:all;">
     <i class="fa-solid fa-ban text-white text-3xl opacity-80"></i>
     <span class="text-white text-xs font-bold bg-slate-800/80 px-3 py-1 rounded-full">Produk Nonaktif</span>
   </div>

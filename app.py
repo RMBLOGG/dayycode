@@ -69,6 +69,7 @@ def index():
         sb.table('products')
         .select('*, categories(name)')
         .eq('featured', True)
+        .eq('active', True)
         .order('sales', desc=True)
         .limit(6)
         .execute().data
@@ -84,6 +85,7 @@ def index():
     latest_raw = (
         sb.table('products')
         .select('*, categories(name)')
+        .eq('active', True)
         .order('created_at', desc=True)
         .limit(12)
         .execute().data
@@ -118,7 +120,7 @@ def products_page():
     limit    = 12
     offset   = (page - 1) * limit
 
-    q = sb.table('products').select('*, categories(name, slug)')
+    q = sb.table('products').select('*, categories(name, slug)').eq('active', True)
 
     if cat_slug:
         # resolve category id first
@@ -163,6 +165,7 @@ def product_detail(slug):
         sb.table('products')
         .select('*, categories(name, slug)')
         .eq('slug', slug)
+        .eq('active', True)
         .limit(1)
         .execute().data
     )
@@ -181,6 +184,7 @@ def product_detail(slug):
         sb.table('products')
         .select('*, categories(name)')
         .eq('category_id', product['category_id'])
+        .eq('active', True)
         .neq('id', product['id'])
         .limit(4)
         .execute().data

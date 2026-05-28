@@ -1,21 +1,18 @@
-<div class="group bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-md transition-all duration-200 relative">
-
-  <!-- Inactive overlay — blocks all interaction -->
-  {% if not p.active %}
-  <div class="absolute inset-0 z-20 bg-slate-900/60 backdrop-blur-[2px] rounded-xl flex flex-col items-center justify-center gap-2 cursor-not-allowed" onclick="return false;" style="pointer-events:all;">
-    <i class="fa-solid fa-ban text-white text-3xl opacity-80"></i>
-    <span class="text-white text-xs font-bold bg-slate-800/80 px-3 py-1 rounded-full">Produk Nonaktif</span>
-  </div>
-  {% endif %}
+<div class="group bg-white rounded-xl overflow-hidden border {{ 'border-slate-200 opacity-75' if not p.active else 'border-slate-100 hover:shadow-md' }} transition-all duration-200 relative">
 
   <!-- Thumbnail -->
+  {% if p.active %}
   <a href="/product/{{ p.slug }}" class="block relative overflow-hidden">
+  {% else %}
+  <div class="block relative overflow-hidden cursor-not-allowed">
+  {% endif %}
+
     {% set screenshots = parse_json(p.screenshots) if p.screenshots else [] %}
     {% set thumb = p.thumbnail if p.thumbnail else (screenshots[0] if screenshots else '') %}
 
     {% if thumb %}
     <div class="aspect-video overflow-hidden">
-      <img src="{{ thumb }}" alt="{{ p.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+      <img src="{{ thumb }}" alt="{{ p.title }}" class="w-full h-full object-cover {{ 'group-hover:scale-105' if p.active }} transition-transform duration-300 {{ 'grayscale' if not p.active }}">
     </div>
     {% else %}
     <div class="aspect-video bg-slate-100 flex items-center justify-center">
@@ -30,10 +27,22 @@
     </span>
     {% endif %}
 
-    {% if p.featured %}
+    {% if p.active and p.featured %}
     <span class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-0.5 rounded-md">⭐ Unggulan</span>
     {% endif %}
+
+    <!-- Nonaktif badge -->
+    {% if not p.active %}
+    <span class="absolute top-2 left-2 bg-slate-700 text-white text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+      <i class="fa-solid fa-ban text-[9px]"></i> Nonaktif
+    </span>
+    {% endif %}
+
+  {% if p.active %}
   </a>
+  {% else %}
+  </div>
+  {% endif %}
 
   <!-- Info -->
   <div class="p-3">
@@ -44,9 +53,13 @@
     {% endif %}
 
     <!-- Title -->
+    {% if p.active %}
     <a href="/product/{{ p.slug }}">
       <p class="text-[13px] font-bold text-slate-800 line-clamp-2 leading-snug mb-1.5 hover:text-blue-600 transition-colors">{{ p.title }}</p>
     </a>
+    {% else %}
+    <p class="text-[13px] font-bold text-slate-500 line-clamp-2 leading-snug mb-1.5">{{ p.title }}</p>
+    {% endif %}
 
     <!-- Short desc -->
     <p class="text-[11px] text-slate-400 line-clamp-1 mb-2">{{ p.short_desc }}</p>
@@ -70,7 +83,7 @@
 
     <!-- Price -->
     <div class="flex items-baseline gap-1.5 mb-2.5">
-      <span class="font-extrabold font-mono text-slate-900 text-[15px]">{{ fmt_rp(p.price) }}</span>
+      <span class="font-extrabold font-mono {{ 'text-slate-900' if p.active else 'text-slate-400' }} text-[15px]">{{ fmt_rp(p.price) }}</span>
       {% if p.original_price and p.original_price > p.price %}
       <span class="font-mono text-xs text-slate-400 line-through">{{ fmt_rp(p.original_price) }}</span>
       {% endif %}
@@ -78,6 +91,7 @@
 
     <!-- Actions -->
     <div class="flex items-center gap-1.5">
+      {% if p.active %}
       <a href="/product/{{ p.slug }}" class="flex-1 text-center py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all active:scale-95">
         Detail Produk
       </a>
@@ -88,6 +102,11 @@
         title="Simpan ke Wishlist">
         <i class="fa-regular fa-heart text-xs"></i>
       </button>
+      {% else %}
+      <div class="flex-1 text-center py-2 bg-slate-100 text-slate-400 font-bold text-xs rounded-xl cursor-not-allowed">
+        Tidak Tersedia
+      </div>
+      {% endif %}
     </div>
 
     <!-- Sales count -->

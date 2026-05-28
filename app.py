@@ -69,7 +69,6 @@ def index():
         sb.table('products')
         .select('*, categories(name)')
         .eq('featured', True)
-        .eq('active', True)
         .order('sales', desc=True)
         .limit(6)
         .execute().data
@@ -85,7 +84,6 @@ def index():
     latest_raw = (
         sb.table('products')
         .select('*, categories(name)')
-        .eq('active', True)
         .order('created_at', desc=True)
         .limit(12)
         .execute().data
@@ -120,7 +118,7 @@ def products_page():
     limit    = 12
     offset   = (page - 1) * limit
 
-    q = sb.table('products').select('*, categories(name, slug)').eq('active', True)
+    q = sb.table('products').select('*, categories(name, slug)')
 
     if cat_slug:
         # resolve category id first
@@ -165,7 +163,6 @@ def product_detail(slug):
         sb.table('products')
         .select('*, categories(name, slug)')
         .eq('slug', slug)
-        .eq('active', True)
         .limit(1)
         .execute().data
     )
@@ -184,7 +181,6 @@ def product_detail(slug):
         sb.table('products')
         .select('*, categories(name)')
         .eq('category_id', product['category_id'])
-        .eq('active', True)
         .neq('id', product['id'])
         .limit(4)
         .execute().data
@@ -201,10 +197,12 @@ def product_detail(slug):
 @app.route('/buy/<slug>', methods=['GET', 'POST'])
 def buy(slug):
     sb  = get_supabase()
-    rows = sb.table('products').select('*').eq('slug', slug).eq('active', True).limit(1).execute().data
+    rows = sb.table('products').select('*').eq('slug', slug).limit(1).execute().data
     if not rows:
         abort(404)
     product = dict(rows[0])
+    if not product.get('active'):
+        abort(404)
 
     if request.method == 'POST':
         data         = request.json
@@ -478,7 +476,6 @@ def admin_products():
     products_raw = (
         sb.table('products')
         .select('*, categories(name)')
-        .eq('active', True)
         .order('created_at', desc=True)
         .execute().data
     )
@@ -600,8 +597,20 @@ def api_update_product(pid):
 @admin_required
 def api_delete_product(pid):
     sb = get_supabase()
-    sb.table('products').update({'active': False}).eq('id', pid).execute()
+    sb.table('products').delete().eq('id', pid).execute()
     return jsonify({'ok': True})
+
+
+@app.route('/api/admin/products/<int:pid>/toggle-active', methods=['POST'])
+@admin_required
+def api_toggle_product_active(pid):
+    sb = get_supabase()
+    rows = sb.table('products').select('active').eq('id', pid).limit(1).execute().data
+    if not rows:
+        return jsonify({'error': 'Not found'}), 404
+    new_active = not rows[0].get('active', True)
+    sb.table('products').update({'active': new_active}).eq('id', pid).execute()
+    return jsonify({'ok': True, 'active': new_active})
 
 
 @app.route('/api/admin/products/<int:pid>/upload-file', methods=['POST'])

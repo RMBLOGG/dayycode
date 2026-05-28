@@ -69,7 +69,7 @@ def index():
         sb.table('products')
         .select('*, categories(name)')
         .eq('featured', True)
-        .eq('active', True)
+        .is_('deleted_at', 'null')
         .order('sales', desc=True)
         .limit(6)
         .execute().data
@@ -85,7 +85,7 @@ def index():
     latest_raw = (
         sb.table('products')
         .select('*, categories(name)')
-        .eq('active', True)
+        .is_('deleted_at', 'null')
         .order('created_at', desc=True)
         .limit(12)
         .execute().data
@@ -101,7 +101,7 @@ def index():
             break
 
     # Stats
-    all_active = sb.table('products').select('sales').eq('active', True).execute().data
+    all_active = sb.table('products').select('sales').eq('active', True).is_('deleted_at', 'null').execute().data
     stats = {
         'total_products': len(all_active),
         'total_sales':    sum(p.get('sales', 0) for p in all_active),
@@ -120,7 +120,7 @@ def products_page():
     limit    = 12
     offset   = (page - 1) * limit
 
-    q = sb.table('products').select('*, categories(name, slug)').eq('active', True)
+    q = sb.table('products').select('*, categories(name, slug)').is_('deleted_at', 'null')
 
     if cat_slug:
         # resolve category id first
@@ -166,6 +166,7 @@ def product_detail(slug):
         .select('*, categories(name, slug)')
         .eq('slug', slug)
         .eq('active', True)
+        .is_('deleted_at', 'null')
         .limit(1)
         .execute().data
     )
@@ -184,7 +185,7 @@ def product_detail(slug):
         sb.table('products')
         .select('*, categories(name)')
         .eq('category_id', product['category_id'])
-        .eq('active', True)
+        .is_('deleted_at', 'null')
         .neq('id', product['id'])
         .limit(4)
         .execute().data
@@ -201,7 +202,7 @@ def product_detail(slug):
 @app.route('/buy/<slug>', methods=['GET', 'POST'])
 def buy(slug):
     sb  = get_supabase()
-    rows = sb.table('products').select('*').eq('slug', slug).limit(1).execute().data
+    rows = sb.table('products').select('*').eq('slug', slug).is_('deleted_at', 'null').limit(1).execute().data
     if not rows:
         abort(404)
     product = dict(rows[0])
@@ -409,7 +410,7 @@ def admin_dashboard():
         'pending':        _count(lambda o: o['status'] in ('pending', 'waiting_confirm')),
         'total_orders':   len(all_orders),
         'total_sales':    _sum(lambda o: o['status'] == 'approved'),
-        'total_products': len(sb.table('products').select('id').eq('active', True).execute().data),
+        'total_products': len(sb.table('products').select('id').eq('active', True).is_('deleted_at', 'null').execute().data),
     }
 
     chart = []
@@ -424,6 +425,7 @@ def admin_dashboard():
         sb.table('products')
         .select('title,sales,downloads')
         .eq('active', True)
+        .is_('deleted_at', 'null')
         .order('sales', desc=True)
         .limit(5)
         .execute().data
@@ -480,6 +482,7 @@ def admin_products():
     products_raw = (
         sb.table('products')
         .select('*, categories(name)')
+        .is_('deleted_at', 'null')
         .order('created_at', desc=True)
         .execute().data
     )
@@ -601,9 +604,8 @@ def api_update_product(pid):
 @admin_required
 def api_delete_product(pid):
     sb = get_supabase()
-    sb.table('products').delete().eq('id', pid).execute()
+    sb.table('products').update({'deleted_at': datetime.now().isoformat()}).eq('id', pid).execute()
     return jsonify({'ok': True})
-
 
 @app.route('/api/admin/products/<int:pid>/toggle-active', methods=['POST'])
 @admin_required

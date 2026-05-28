@@ -19,7 +19,7 @@
 
   <div id="prodList" class="space-y-3">
     {% for p in products %}
-    <div class="prod-card bg-white rounded-2xl border border-slate-200 shadow-sm p-4 hover:border-blue-200 hover:shadow-md transition-all {{ 'opacity-50' if not p.active }}" data-title="{{ p.title|lower }}" data-cat="{{ p.cat_name|lower }}" data-tech="{{ p.tech_stack|lower }}">
+    <div class="prod-card bg-white rounded-2xl border border-slate-200 shadow-sm p-4 hover:border-blue-200 hover:shadow-md transition-all {{ 'opacity-60 border-slate-300' if not p.active }}" data-title="{{ p.title|lower }}" data-cat="{{ p.cat_name|lower }}" data-tech="{{ p.tech_stack|lower }}">
       <div class="flex items-start gap-4">
         <div class="w-16 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border border-blue-100">
           {% if p.thumbnail %}
@@ -36,7 +36,7 @@
         <div class="flex-1 min-w-0">
           <div class="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <p class="font-bold text-slate-800">{{ p.title }}</p>
+              <p class="font-bold text-slate-800">{{ p.title }} {% if not p.active %}<span class="inline-block text-[10px] font-bold bg-red-100 text-red-500 border border-red-200 px-1.5 py-0.5 rounded-md ml-1">Nonaktif</span>{% endif %}</p>
               <p class="text-slate-400 text-xs mt-0.5">{{ p.cat_name or '-' }} · v{{ p.version }}</p>
               <div class="flex flex-wrap gap-1 mt-1.5">
                 {% for t in p.tech_stack.split(',')[:4] if p.tech_stack %}
@@ -63,6 +63,9 @@
         </button>
         <button onclick="openUploadSS({{ p.id }})" class="flex-1 py-2 bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 text-slate-600 hover:text-purple-600 rounded-xl text-xs font-bold transition-all">
           <i class="fa-solid fa-image mr-1.5"></i>Screenshot
+        </button>
+        <button onclick="toggleActive({{ p.id }}, {{ 'true' if p.active else 'false' }})" class="flex-1 py-2 {% if p.active %}bg-slate-50 hover:bg-orange-50 border border-slate-200 hover:border-orange-300 text-slate-600 hover:text-orange-600{% else %}bg-green-50 hover:bg-green-100 border border-green-200 hover:border-green-400 text-green-600{% endif %} rounded-xl text-xs font-bold transition-all" id="toggle-btn-{{ p.id }}">
+          <i class="fa-solid {% if p.active %}fa-eye-slash{% else %}fa-eye{% endif %} mr-1.5" id="toggle-icon-{{ p.id }}"></i><span id="toggle-label-{{ p.id }}">{% if p.active %}Nonaktifkan{% else %}Aktifkan{% endif %}</span>
         </button>
         <button onclick="deleteProduct({{ p.id }})" class="py-2 px-3 bg-slate-50 hover:bg-red-50 border border-slate-200 hover:border-red-300 text-slate-400 hover:text-red-500 rounded-xl text-xs font-bold transition-all">
           <i class="fa-solid fa-trash"></i>
@@ -335,9 +338,33 @@ async function saveProduct() {
   }
 }
 async function deleteProduct(id) {
-  if (!confirm('Hapus produk ini?')) return;
+  if (!confirm('Hapus produk ini permanen? Aksi ini tidak bisa dibatalkan.')) return;
   const res = await api(`/api/admin/products/${id}`, { method:'DELETE' });
   if (res.ok) { showToast('Produk dihapus!'); setTimeout(()=>location.reload(), 600); }
+}
+async function toggleActive(id, currentActive) {
+  const label = currentActive ? 'nonaktifkan' : 'aktifkan';
+  if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} produk ini?`)) return;
+  const res = await api(`/api/admin/products/${id}/toggle-active`, { method:'POST' });
+  if (res.ok) {
+    const isNowActive = res.active;
+    const btn = document.getElementById(`toggle-btn-${id}`);
+    const icon = document.getElementById(`toggle-icon-${id}`);
+    const lbl = document.getElementById(`toggle-label-${id}`);
+    if (isNowActive) {
+      btn.className = btn.className.replace(/bg-green-\S+|border-green-\S+|text-green-\S+/g, '').trim();
+      btn.classList.add('bg-slate-50','hover:bg-orange-50','border','border-slate-200','hover:border-orange-300','text-slate-600','hover:text-orange-600');
+      icon.className = 'fa-solid fa-eye-slash mr-1.5';
+      lbl.textContent = 'Nonaktifkan';
+    } else {
+      btn.className = btn.className.replace(/bg-slate-\S+|hover:bg-orange-\S+|border-slate-\S+|hover:border-orange-\S+|text-slate-\S+|hover:text-orange-\S+/g, '').trim();
+      btn.classList.add('bg-green-50','hover:bg-green-100','border','border-green-200','hover:border-green-400','text-green-600');
+      icon.className = 'fa-solid fa-eye mr-1.5';
+      lbl.textContent = 'Aktifkan';
+    }
+    showToast(isNowActive ? 'Produk diaktifkan!' : 'Produk dinonaktifkan!');
+    setTimeout(()=>location.reload(), 800);
+  }
 }
 function openUploadFile(id, name) {
   document.getElementById('fileProductId').value = id;
